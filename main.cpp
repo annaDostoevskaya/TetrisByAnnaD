@@ -26,8 +26,12 @@ typedef double r64;
 
 typedef u32 b32;
 
-#define SCREEN_WIDTH 960
-#define SCREEN_HEIGHT 540
+#define internal static
+#define globalv static
+#define localv static
+
+#define SCREEN_WIDTH 1920/2
+#define SCREEN_HEIGHT 1080/2
 
 
 enum tetrominoes 
@@ -43,9 +47,11 @@ enum tetrominoes
 
 struct game_state 
 {
-    b32 Initialied;
+    b32 Initialized;
     u32 PosX;
     u32 PosY;
+    
+    void *WellMemory;
 };
 
 struct game_time 
@@ -80,9 +86,32 @@ struct game_buffer
     void *Memory;
 };
 
-void DrawCube(game_buffer *Buffer, i32 X, i32 Y, i32 W, i32 H,
-              r32 Red, r32 Green, r32 Blue)
+#define WHITE_COLOR_RGB 0.93f
+#define GRID_COLOR_HEX 0xFF111111 
+
+#define WELL_WIDTH 9
+#define WELL_HEIGHT 16
+
+// globalv u32 CellSide = 10 * 3; // TODO(annad): Grid System
+
+internal void DrawRectangle(game_buffer *Buffer, i32 X, i32 Y, i32 W, i32 H,
+                            r32 Red, r32 Green, r32 Blue)
 {
+    // NOTE(annad): Reverse buffer.
+    Y = Buffer->Height - Y;
+    
+    // TODO(annad): Grid Rendering.
+    /*
+    if(X % CellSide != 0)
+    {
+        X += X % CellSide;
+    }
+    
+    if(Y % CellSide != 0)
+    {
+        Y += Y % CellSide;
+    }
+    */
     if(W < 0)
     {
         W = 0;
@@ -156,40 +185,106 @@ void DrawCube(game_buffer *Buffer, i32 X, i32 Y, i32 W, i32 H,
     }
 }
 
-void UpdateAndRender(game_buffer *Buffer, 
-                     game_input *Input,
-                     game_state *State,
-                     game_time *Time)
+internal void DrawBaseGrid(game_buffer *Buffer, u32 CellWidth, u32 CellHeight)
 {
-    if(State->Initialied != true)
+    u32 *Pixels = (u32 *)Buffer->Memory;
+    
+    for(i32 Y = 0; Y < Buffer->Height; ++Y)
+    {
+        for(i32 X = 0; X < Buffer->Width; ++X)
+        {
+            if(X % CellWidth == 0 || Y % CellHeight == 0)
+            {
+                Pixels[Y * Buffer->Width + X] = GRID_COLOR_HEX;
+            }
+        }
+    }
+}
+
+
+internal void DrawWell(game_buffer *Buffer, 
+                       u32 WellPositionX, u32 WellPositionY,
+                       u32 WellWidth, u32 WellHeight,
+                       u32 WellCellSizeSide)
+{
+    for(i32 Y = 0; Y < WellHeight; ++Y)
+    {
+        u32 DrawPosY = WellPositionY + Y * WellCellSizeSide;
+        
+        for(i32 X = 0; X < WellWidth; ++X)
+        {
+            if(X == 0 || Y == 0 || X == WellWidth - 1)
+            {
+                u32 DrawPosX = WellPositionX + X * WellCellSizeSide;
+                
+                DrawRectangle(Buffer, 
+                              DrawPosX, DrawPosY, 
+                              WellCellSizeSide, WellCellSizeSide,
+                              WHITE_COLOR_RGB, WHITE_COLOR_RGB, WHITE_COLOR_RGB);
+            }
+        }
+    }
+}
+
+
+internal void UpdateAndRender(game_buffer *Buffer, 
+                              game_input *Input,
+                              game_state *State,
+                              game_time *Time)
+{
+    u32 MetaPixelSize = 10; // NOTE(annad): Pixels size. 1 cube is 50px.
+    
+    // NOTE(annad): Draw Well.
+    u32 WellWidth = WELL_WIDTH + 2;
+    u32 WellHeight = WELL_HEIGHT + 2;
+    u32 WellCellSide = MetaPixelSize * 3;
+    u32 WellPositionX = Buffer->Width / 2 - (WellWidth * WellCellSide / 2);
+    u32 WellPositionY = 0;
+    
+    DrawWell(Buffer,
+             WellPositionX, WellPositionY,
+             WellWidth, WellHeight,
+             WellCellSide);
+    
+    // NOTE(annad): Init.
+    if(State->Initialized != true)
     {
         State->PosX = Buffer->Width / 2;
         State->PosY = Buffer->Height / 2;
-        State->Initialied = true;
+        
+        globalv u8 Mem[WELL_WIDTH * WELL_HEIGHT];
+        State->WellMemory = (void*)Mem;
+        
+        State->Initialized = true;
     }
     
-    // tetrominoes base = TETROMINO_STRAIGHT;
+    {
+        // NOTE(annad): Input handling.
+        if(Input->PressedKey == KEY_UP)
+        {
+            State->PosY += 500 * Time->dtSeconds;
+        }
+        else if(Input->PressedKey == KEY_DOWN)
+        {
+            State->PosY -= 500 * Time->dtSeconds;
+        }
+        else if(Input->PressedKey == KEY_LEFT)
+        {
+            State->PosX -= 500 * Time->dtSeconds;
+        }
+        else if(Input->PressedKey == KEY_RIGHT)
+        {
+            State->PosX += 500 * Time->dtSeconds;
+        }
+    }
     
-    u32 MetaPixelSize = 10; // NOTE(annad): Pixels size. 1 cube is 50px.
+    // NOTE(annad): Draw Grid.
+    u32 CellWidth = MetaPixelSize * 3;
+    u32 CellHeight = MetaPixelSize * 3;
     
-    if(Input->PressedKey == KEY_UP)
-    {
-        State->PosY -= 500 * Time->dtSeconds;
-    }
-    else if(Input->PressedKey == KEY_DOWN)
-    {
-        State->PosY += 500 * Time->dtSeconds;
-    }
-    else if(Input->PressedKey == KEY_LEFT)
-    {
-        State->PosX -= 500 * Time->dtSeconds;
-    }
-    else if(Input->PressedKey == KEY_RIGHT)
-    {
-        State->PosX += 500 * Time->dtSeconds;
-    }
+    DrawBaseGrid(Buffer, CellWidth, CellHeight);
     
-    DrawCube(Buffer, State->PosX , State->PosY, MetaPixelSize, MetaPixelSize, 0.5f, 0.5f, 0.5f);
+    DrawRectangle(Buffer, State->PosX , State->PosY, MetaPixelSize * 3, MetaPixelSize * 3, WHITE_COLOR_RGB, WHITE_COLOR_RGB, WHITE_COLOR_RGB);
 }
 
 int main(int argc, char **argv)
@@ -255,7 +350,7 @@ int main(int argc, char **argv)
     while(Run)
     {
         // TODO(annad): It's normal?... I don't know.
-        SDL_FillRect(Buffer, NULL, SDL_MapRGB(Buffer->format, 255, 255, 255));
+        SDL_FillRect(Buffer, NULL, SDL_MapRGB(Buffer->format, 0, 0, 0));
         
         // NOTE(annad): Events.
         SDL_PollEvent(&Event);
