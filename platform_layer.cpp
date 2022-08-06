@@ -20,9 +20,6 @@ Description: <empty>
 int main(int Argc, char **Argv)
 {
     // NOTE(annad): Init platform layer section.
-    (void)Argc;
-    (void)Argv;
-    
     if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) < 0)
     {
         printf("Failed initialize SDL. SDL_Error: %s\n", SDL_GetError());
@@ -90,24 +87,26 @@ int main(int Argc, char **Argv)
         SDL_FillRect(Buffer, NULL, SDL_MapRGB(Buffer->format, 0, 0, 0));
         
         // NOTE(annad): Events.
-        SDL_PollEvent(&Event);
         
-        switch(Event.type)
+        while(SDL_PollEvent(&Event))
         {
-            // NOTE(annad): Alt+F4 work too.
-            case SDL_QUIT: 
+            switch(Event.type)
             {
-                Run = false;
-                break;
-            }
-            
-            default:
-            {
-                ; // NOTE(annad): Nothing...
+                // NOTE(annad): Alt+F4 work too.
+                case SDL_QUIT: 
+                {
+                    Run = false;
+                    break;
+                }
+                
+                default:
+                {
+                    ; // NOTE(annad): Nothing...
+                }
             }
         }
         
-        
+        // TODO(annad): Remove it!!!
         if(KeyboardState[SDL_SCANCODE_UP] == 1)
         {
             GameInput.PressedKey = KEY_UP;

@@ -15,7 +15,7 @@ Description: <empty>
 
 struct game_memory
 {
-    u8 Memory[MEM_SIZE]; // NOTE(annad): We have to fit in 4KB
+    u8 State[MEM_SIZE]; // NOTE(annad): We have to fit in 4KB
 };
 
 struct game_time 

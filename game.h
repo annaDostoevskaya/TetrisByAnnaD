@@ -56,7 +56,7 @@ struct game_state
     
     u32 MetaPixelSize;
     well Well;
-    tetrimo CurrentTetrimo;
+    // tetrimo CurrentTetrimo;
 };
 
 #endif //GAME_H

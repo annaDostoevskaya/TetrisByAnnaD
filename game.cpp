@@ -142,7 +142,7 @@ internal void RenderWell(game_buffer *Buffer, well *Well)
 GAME_UPDATE_AND_RENDER(UpdateAndRender)
 {
     // NOTE(annad): Init.
-    game_state *State = (game_state *)Memory;
+    game_state *State = (game_state *)Memory->State;
     well *Well = &State->Well;
     
     if(State->Initialized != (b32)true)
