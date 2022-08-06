@@ -14,7 +14,6 @@ Description: <empty>
 
 #define WHITE_COLOR_RGB 0.93f
 #define META_PIXEL_COLOR 0.93f
-#define GRID_COLOR_HEX 0xFF111111 
 
 
 internal void DrawRectangle(game_buffer *Buffer, 
@@ -101,16 +100,33 @@ internal void DEBUG_CheckAllPositions(game_buffer *Buffer, game_time *Time, u32 
 }
 
 
+internal void DEBUG_DrawGrid(game_buffer *Buffer, u32 GridCellSize)
+{
+    u32 *Pixels = (u32 *)Buffer->Memory;
+    for(u32 Y = 0; Y < Buffer->Height; Y++)
+    {
+        for(u32 X = 0; X < Buffer->Width; X++)
+        {
+            if(X % GridCellSize == 0 || Y % GridCellSize == 0)
+            {
+                Pixels[Y * Buffer->Width + X] = 0xFF111111;
+            }
+        }
+    }
+}
+
+
 internal void RenderWell(game_buffer *Buffer, well *Well)
 {
-    for (u32 Y = 0; Y < Well->Height; Y++)
+    for (u32 Y = 0; Y < Well->Height + 2; Y++)
     {
         u32 GlobalPosY = Well->PosY + Y * Well->CellSideSize;
-        for (u32 X = 0; X < Well->Width ; X++)
+        for (u32 X = 0; X < Well->Width + 2 ; X++)
         {
             if (X == 0 || Y == 0 || 
-                X == Well->Width - 1 || Y == Well->Height - 1 ||
-                Well->Field[Y * Well->Width + X])
+                X == (Well->Width + 2) - 1 || 
+                Y == (Well->Height + 2) - 1 ||
+                Well->Field[Y * Well->Width + X]) // NOTE(annad): DANGEROUS: What if X or Y with Well->Width + 2 or Well->Height + 2 move to this Well->Field?..
             {
                 u32 GlobalPosX = Well->PosX + X * Well->CellSideSize;
                 
@@ -144,18 +160,8 @@ GAME_UPDATE_AND_RENDER(UpdateAndRender)
         
         State->Initialized = true;
     }
-#if 0
-    {
-        for (u32 Y = 0; Y < Well->Height; Y++)
-        {
-            u32 GlobalPosY = Y * Well->CellSideSize;
-            for (u32 X = 0; X < Well->Width; X++)
-            {
-                Well->Field[Y * Well->Width + X] = 1;
-            }
-        }
-    }
-#endif
+    
+    
     RenderWell(Buffer, Well);
     
     {
@@ -181,7 +187,8 @@ GAME_UPDATE_AND_RENDER(UpdateAndRender)
     
     // DrawRectangle(Buffer, State->PosX, State->PosY, 100, 100, META_PIXEL_COLOR, META_PIXEL_COLOR, META_PIXEL_COLOR);
     
-    DEBUG_CheckAllPositions(Buffer, Time, 50);
+    DEBUG_CheckAllPositions(Buffer, Time, State->MetaPixelSize * 5);
+    DEBUG_DrawGrid(Buffer, Well->CellSideSize);
     // DrawRectangle(Buffer, 0, Buffer->Height, 50, 50, META_PIXEL_COLOR, META_PIXEL_COLOR, META_PIXEL_COLOR);
 }
 

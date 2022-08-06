@@ -13,7 +13,7 @@ if not exist build mkdir build
 pushd build
 
 if not exist SDL2.dll (
-  echo [BUILD] Please, put SDL2.dll in build dir. 
+  echo BUILD.BAT: Please, put SDL2.dll in ./BUILD dir. 
   exit /B -1
 )
 
