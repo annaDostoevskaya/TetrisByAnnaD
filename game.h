@@ -49,10 +49,12 @@ struct tetromino
 
 struct game_state
 {
+    bool stub;
     b32 Initialized;
     
     u32 PosX;
     u32 PosY;
+    u32 PlayerSize;
     
     u32 MetaPixelSize;
     well Well;

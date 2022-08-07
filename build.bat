@@ -2,7 +2,8 @@
 
 utils\ctime.exe -begin tetris.ctm
 
-set opts=-FC -GR- -EHa- -nologo -Zi -Wall -WX -W3 -wd4018 -wd5045 -wd4996
+REM REMOVE THIS !!! -wd4311 -wd4302 !!! FROM OPTS
+set opts=-FC -GR- -EHa- -nologo -Zi -Wall -WX -W3 -wd4018 -wd5045 -wd4996 -wd4311 -wd4302
 
 set code=%cd%
 set lib_path=%code%\thirdparty\libs

@@ -1,6 +1,6 @@
 /* 
 Author: github.com/annadostoevskaya
-File: platform_layer.cpp
+File: sdl_game.cpp
 Date: August 6th 2022 3:26 pm 
 
 Description: <empty>
@@ -9,7 +9,7 @@ Description: <empty>
 #include <windows.h>
 
 #include "base_types.h"
-#include "platform_layer.h"
+#include "sdl_game.h"
 
 #include <SDL2/SDL.h>
 #include <stdio.h>
@@ -48,7 +48,6 @@ int main(int Argc, char **Argv)
         return -1;
     }
     
-    
     // NOTE(annad): Buffer for rendering to window.
     game_buffer GameBuffer = {};
     GameBuffer.Width = Buffer->w;
@@ -56,21 +55,16 @@ int main(int Argc, char **Argv)
     GameBuffer.Pitch = Buffer->pitch;
     GameBuffer.Memory = Buffer->pixels;
     
-    
     // NOTE(annad): Keys states.
-    u32 NumKeys = 0;
-    const u8 *KeyboardState = SDL_GetKeyboardState((int*)&NumKeys);
     game_input GameInput = {};
-    
     
     // NOTE(annad): Event for quit.
     SDL_Event Event = {};
     b32 Run = true;
     
-    
     // NOTE(annad): Game Memory Section.
     game_memory GameMemory = {};
-    
+    GameMemory.PermanentStorageSize = PERMANENT_STORAGE_SIZE;
     
     // NOTE(annad): Setup timer and frame rate.
     u32 FrameRate = 30;
@@ -83,11 +77,11 @@ int main(int Argc, char **Argv)
     
     while(Run)
     {
-        // TODO(annad): Cleaning buffer, It's normal?... I don't know.
+        // NOTE(annad): Cleaning all data from previous frame.
         SDL_FillRect(Buffer, NULL, SDL_MapRGB(Buffer->format, 0, 0, 0));
+        GameInput.PressedKey = KEY_NOTHING;
         
         // NOTE(annad): Events.
-        
         while(SDL_PollEvent(&Event))
         {
             switch(Event.type)
@@ -99,41 +93,64 @@ int main(int Argc, char **Argv)
                     break;
                 }
                 
+                case SDL_KEYDOWN:
+                {
+                    switch(Event.key.keysym.sym)
+                    {
+                        case SDLK_UP:
+                        {
+                            GameInput.PressedKey = KEY_UP;
+                            break;
+                        }
+                        
+                        case SDLK_DOWN:
+                        {
+                            GameInput.PressedKey = KEY_DOWN;
+                            break;
+                        }
+                        
+                        case SDLK_LEFT:
+                        {
+                            GameInput.PressedKey = KEY_LEFT;
+                            break;
+                        }
+                        
+                        case SDLK_RIGHT:
+                        {
+                            GameInput.PressedKey = KEY_RIGHT;
+                            break;
+                        }
+                        
+                        case SDLK_SPACE:
+                        {
+                            GameInput.PressedKey = KEY_SPACE;
+                            break;
+                        }
+                        
+                        default:
+                        {
+                            GameInput.PressedKey = KEY_NOTHING;
+                            break; 
+                        }
+                    }
+                    
+                    break;
+                }
+                
                 default:
                 {
-                    ; // NOTE(annad): Nothing...
+                    // NOTE(annad): Nothing...
+                    break;
                 }
             }
-        }
-        
-        // TODO(annad): Remove it!!!
-        if(KeyboardState[SDL_SCANCODE_UP] == 1)
-        {
-            GameInput.PressedKey = KEY_UP;
-        }
-        else if(KeyboardState[SDL_SCANCODE_DOWN])
-        {
-            GameInput.PressedKey = KEY_DOWN;
-        }
-        else if(KeyboardState[SDL_SCANCODE_LEFT] == 1)
-        {
-            GameInput.PressedKey = KEY_LEFT;
-        }
-        else if(KeyboardState[SDL_SCANCODE_RIGHT])
-        {
-            GameInput.PressedKey = KEY_RIGHT;
-        }
-        else
-        {
-            GameInput.PressedKey = KEY_NOTHING;
         }
         
         // NOTE(annad): Main.
         UpdateAndRender(&GameBuffer, &GameInput, &GameMemory, &GameTime);
         
-        
         SDL_UpdateWindowSurface(Window);
         
+        // NOTE(annad): Timers.
         GameTime.EndTime = SDL_GetTicks();
         GameTime.dt = GameTime.EndTime - GameTime.BeginTime;
         

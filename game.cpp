@@ -1,16 +1,18 @@
 /* 
 Author: github.com/annadostoevskaya
-File: main.cpp
+File: game.cpp
 Date: August 1st 2022 9:09 pm 
 
 Description: <empty>
 */
 
-#include "platform_layer.cpp"
-
 #include "base_types.h"
 #include "game.h"
-#include "platform_layer.h"
+#include "sdl_game.h"
+
+#include "sdl_game.cpp"
+
+#include <assert.h>
 
 #define WHITE_COLOR_RGB 0.93f
 #define META_PIXEL_COLOR 0.93f
@@ -54,68 +56,6 @@ internal void DrawRectangle(game_buffer *Buffer,
     }
 }
 
-internal void DEBUG_CheckAllPositions(game_buffer *Buffer, game_time *Time, u32 CheckerSize)
-{
-    u32 CountX = Buffer->Width / CheckerSize;
-    u32 CountY = Buffer->Height / CheckerSize;
-    
-    localv u32 Accum = 0;
-    localv u32 IterCountX = 0;
-    localv u32 IterCountY = CountY;
-    
-    if(Accum >= 100)
-    {
-        if(IterCountX > CountX)
-        {
-            IterCountX = 0;
-            IterCountY--;
-        }
-        else
-        {
-            IterCountX++;
-        }
-        
-        if(IterCountY > CountY)
-        {
-            IterCountY = CountY;
-        }
-        
-        Accum = 0;
-    }
-    
-    u32 GlobalPosX = IterCountX * CheckerSize;
-    u32 GlobalPosY = IterCountY * CheckerSize;
-    
-    if(IterCountY == CountY)
-    {
-        GlobalPosY += Buffer->Height % CheckerSize;
-    }
-    
-    DrawRectangle(Buffer, 
-                  GlobalPosX, GlobalPosY, 
-                  CheckerSize, CheckerSize,
-                  0.93f, 0.93f, 0.93f);
-    
-    Accum += Time->dt;
-}
-
-
-internal void DEBUG_DrawGrid(game_buffer *Buffer, u32 GridCellSize)
-{
-    u32 *Pixels = (u32 *)Buffer->Memory;
-    for(u32 Y = 0; Y < Buffer->Height; Y++)
-    {
-        for(u32 X = 0; X < Buffer->Width; X++)
-        {
-            if(X % GridCellSize == 0 || Y % GridCellSize == 0)
-            {
-                Pixels[Y * Buffer->Width + X] = 0xFF111111;
-            }
-        }
-    }
-}
-
-
 internal void RenderWell(game_buffer *Buffer, well *Well)
 {
     for (u32 Y = 0; Y < Well->Height + 2; Y++)
@@ -139,11 +79,20 @@ internal void RenderWell(game_buffer *Buffer, well *Well)
     }
 }
 
+#define _GAME_INTERNAL
+#ifdef _GAME_INTERNAL
+#include "debug.cpp"
+#endif
+
 GAME_UPDATE_AND_RENDER(UpdateAndRender)
 {
+    assert(sizeof(game_state) < Memory->PermanentStorageSize);
+    
     // NOTE(annad): Init.
-    game_state *State = (game_state *)Memory->State;
+    // NOTE(saiel): Objectively, this UB.
+    game_state *State = (game_state *)Memory->PermanentStorage;
     well *Well = &State->Well;
+    
     
     if(State->Initialized != (b32)true)
     {
@@ -157,6 +106,7 @@ GAME_UPDATE_AND_RENDER(UpdateAndRender)
         
         State->PosX = Buffer->Width / 2;
         State->PosY = Buffer->Height / 2;
+        State->PlayerSize = State->MetaPixelSize;
         
         State->Initialized = true;
     }
@@ -182,13 +132,18 @@ GAME_UPDATE_AND_RENDER(UpdateAndRender)
         {
             State->PosX += 10;
         }
+        else if(Input->PressedKey == KEY_SPACE)
+        {
+            State->PlayerSize += 1;
+        }
     }
     
     
-    // DrawRectangle(Buffer, State->PosX, State->PosY, 100, 100, META_PIXEL_COLOR, META_PIXEL_COLOR, META_PIXEL_COLOR);
+    DrawRectangle(Buffer, State->PosX, State->PosY, State->PlayerSize, State->PlayerSize, META_PIXEL_COLOR, META_PIXEL_COLOR, META_PIXEL_COLOR);
     
     DEBUG_CheckAllPositions(Buffer, Time, State->MetaPixelSize * 5);
     DEBUG_DrawGrid(Buffer, Well->CellSideSize);
     // DrawRectangle(Buffer, 0, Buffer->Height, 50, 50, META_PIXEL_COLOR, META_PIXEL_COLOR, META_PIXEL_COLOR);
+    // DEBUG_DrawELT(Buffer);
 }
 

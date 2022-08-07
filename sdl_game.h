@@ -1,21 +1,22 @@
 /* 
 Author: github.com/annadostoevskaya
-File: platform_layer.h
+File: sdl_game.h
 Date: August 6th 2022 6:23 pm 
 
 Description: <empty>
 */
 
-#ifndef PLATFORM_LAYER_H
-#define PLATFORM_LAYER_H
+#ifndef SDL_GAME_H
+#define SDL_GAME_H
 
 #include "base_types.h"
 
-#define MEM_SIZE 4096
+#define PERMANENT_STORAGE_SIZE 4096
 
 struct game_memory
 {
-    u8 State[MEM_SIZE]; // NOTE(annad): We have to fit in 4KB
+    u8 PermanentStorage[PERMANENT_STORAGE_SIZE]; // NOTE(annad): We have to fit in 4KB
+    u64 PermanentStorageSize;
 };
 
 struct game_time 
@@ -28,11 +29,13 @@ struct game_time
 
 enum Keys 
 {
-    KEY_NOTHING,
+    KEY_NOTHING = 0,
+    
     KEY_DOWN,
     KEY_UP,
     KEY_LEFT,
     KEY_RIGHT,
+    KEY_SPACE,
     
     KEY_TOTAL
 };
@@ -58,4 +61,4 @@ game_time *Time)
 GAME_UPDATE_AND_RENDER(UpdateAndRender);
 
 
-#endif //PLATFORM_LAYER_H
+#endif //SDL_GAME_H
