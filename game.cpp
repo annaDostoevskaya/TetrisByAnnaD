@@ -91,14 +91,32 @@ internal void SwitchBlock(well *Well, u16 TetroX, u16 TetroY)
     assert(Well->Height > TetroY);
     
     TetroY = Well->Height - TetroY - 1;
-    Well->Field[TetroY * Well->Width + TetroX] = !Well->Field[TetroY * Well->Width + TetroX];
+    
+    if(Well->Field[TetroY * Well->Width + TetroX] == BLOCK_STATE_EMPTY)
+    {
+        Well->Field[TetroY * Well->Width + TetroX] = BLOCK_STATE_TETRO;
+    }
+    else if(Well->Field[TetroY * Well->Width + TetroX] == BLOCK_STATE_TETRO)
+    {
+        Well->Field[TetroY * Well->Width + TetroX] = BLOCK_STATE_EMPTY;
+    }
 }
 
 internal b32 IsBlockFilled(well *Well, u16 TetroX, u16 TetroY)
 {
     assert(Well->Height > TetroY);
     TetroY = Well->Height - TetroY - 1;
-    return Well->Field[TetroY * Well->Width + TetroX] == 1;
+    return Well->Field[TetroY * Well->Width + TetroX] != BLOCK_STATE_EMPTY;
+}
+
+inline void SetWellBlockState(well *Well, blocks_states State, u16 PosX, u16 PosY)
+{
+    assert(PosX < Well->Width);
+    assert(PosY < Well->Height);
+    assert(PosX >= 0 && PosY >= 0);
+    
+    PosY = Well->Height - PosY - 1;
+    Well->Field[PosY * Well->Width + PosX] = State;
 }
 
 #ifdef _GAME_INTERNAL
@@ -135,11 +153,45 @@ GAME_UPDATE_AND_RENDER(UpdateAndRender)
         
         State->TetroState = TETRO_STATE_SPAWN;
         State->TetrominoType = TETROMINO_BASE;
-        State->TetrominoPosXInWell = 0;
+        State->TetrominoPosXInWell = Well->Width / 2;
         State->TetrominoPosYInWell = Well->Height - 1;
         State->TetrimoDownTime = 0;
         
         State->Initialized = true;
+    }
+    
+    {
+        // NOTE(annad): Input handling.
+        if(Input->PressedKey == KEY_UP)
+        {
+            State->PosY += 10;
+        }
+        else if(Input->PressedKey == KEY_DOWN)
+        {
+            State->PosY -= 10;
+        }
+        else if(Input->PressedKey == KEY_LEFT)
+        {
+            if(State->TetrominoPosXInWell > 0)
+            {
+                SetWellBlockState(Well, BLOCK_STATE_EMPTY, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
+                State->TetrominoPosXInWell -= 1;
+                SetWellBlockState(Well, BLOCK_STATE_TETRO, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
+            }
+        }
+        else if(Input->PressedKey == KEY_RIGHT)
+        {
+            if(State->TetrominoPosXInWell < Well->Width - 1)
+            {
+                SetWellBlockState(Well, BLOCK_STATE_EMPTY, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
+                State->TetrominoPosXInWell += 1;
+                SetWellBlockState(Well, BLOCK_STATE_TETRO, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
+            }
+        }
+        else if(Input->PressedKey == KEY_SPACE)
+        {
+            State->PlayerSize += 1;
+        }
     }
     
     // DEBUG_CheckWell(Well, Time);
@@ -150,6 +202,7 @@ GAME_UPDATE_AND_RENDER(UpdateAndRender)
         Well->Field[Index] = false;
     }
     */
+    /*
     switch(State->TetroState)
     {
         case TETRO_STATE_SPAWN:
@@ -177,6 +230,8 @@ GAME_UPDATE_AND_RENDER(UpdateAndRender)
         
         case TETRO_STATE_FALL:
         {
+            SwitchBlock(Well, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
+            Well->Field[State->TetrominoPosYInWell * Well->Width + State->TetrominoPosXInWell] = BLOCK_STATE_FILLED;
             State->TetrominoPosYInWell = Well->Height - 1;
             State->TetroState = TETRO_STATE_SPAWN;
             break;
@@ -188,38 +243,8 @@ GAME_UPDATE_AND_RENDER(UpdateAndRender)
             break;
         }
     }
-    
+    */
     RenderWell(Buffer, Well);
-    
-    {
-        // NOTE(annad): Input handling.
-        if(Input->PressedKey == KEY_UP)
-        {
-            State->PosY += 10;
-        }
-        else if(Input->PressedKey == KEY_DOWN)
-        {
-            State->PosY -= 10;
-        }
-        else if(Input->PressedKey == KEY_LEFT)
-        {
-            if(State->TetrominoPosXInWell < Well->Width)
-            {
-                State->TetrominoPosXInWell += 1;
-            }
-        }
-        else if(Input->PressedKey == KEY_RIGHT)
-        {
-            if(State->TetrominoPosXInWell > 0)
-            {
-                State->TetrominoPosXInWell -= 1;
-            }
-        }
-        else if(Input->PressedKey == KEY_SPACE)
-        {
-            State->PlayerSize += 1;
-        }
-    }
     
     
     // DrawRectangle(Buffer, State->PosX, State->PosY, State->PlayerSize, State->PlayerSize, META_PIXEL_COLOR, META_PIXEL_COLOR, META_PIXEL_COLOR);

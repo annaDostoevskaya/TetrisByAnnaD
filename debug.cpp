@@ -149,14 +149,14 @@ void DEBUG_CheckWell(well *Well, game_time *Time)
             {
                 if(Well->Field[Well->Width * Well->Height - 1])
                 {
-                    Well->Field[Well->Width * Well->Height - 1] = false;
+                    Well->Field[Well->Width * Well->Height - 1] = BLOCK_STATE_EMPTY;
                 }
-                Well->Field[Index++] = true;
+                Well->Field[Index++] = BLOCK_STATE_TETRO;
             }
             else
             {
-                Well->Field[Index - 1] = false;
-                Well->Field[Index++] = true;
+                Well->Field[Index - 1] = BLOCK_STATE_EMPTY;
+                Well->Field[Index++] = BLOCK_STATE_TETRO;
             }
         }
         else

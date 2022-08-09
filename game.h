@@ -36,6 +36,13 @@ enum tetro_states
     TETRO_STATE_TOTAL
 };
 
+enum blocks_states
+{
+    BLOCK_STATE_EMPTY = 0,
+    BLOCK_STATE_FILLED,
+    BLOCK_STATE_TETRO,
+};
+
 struct well
 {
     u32 PosX;
@@ -54,8 +61,7 @@ struct well
     
     u32 CellSideSize;
     
-    b8 Field[WELL_WIDTH * WELL_HEIGHT];
-    b8 ShadowField[WELL_WIDTH * WELL_HEIGHT];
+    blocks_states Field[WELL_WIDTH * WELL_HEIGHT];
 };
 
 struct game_state
