@@ -119,6 +119,15 @@ inline void SetWellBlockState(well *Well, blocks_states State, u16 PosX, u16 Pos
     Well->Field[PosY * Well->Width + PosX] = State;
 }
 
+inline b32 WellBlockIsFilled(well *Well, u16 PosX, u16 PosY)
+{
+    assert(PosX < Well->Width);
+    assert(PosY < Well->Height);
+    assert(PosX >= 0 && PosY >= 0);
+    PosY = Well->Height - PosY - 1;
+    return Well->Field[PosY * Well->Width + PosX] == BLOCK_STATE_FILLED;
+}
+
 #ifdef _GAME_INTERNAL
 #include "debug.cpp"
 #endif
@@ -172,7 +181,7 @@ GAME_UPDATE_AND_RENDER(UpdateAndRender)
         }
         else if(Input->PressedKey == KEY_LEFT)
         {
-            if(State->TetrominoPosXInWell > 0)
+            if(State->TetrominoPosXInWell > 0 && !WellBlockIsFilled(Well, State->TetrominoPosXInWell - 1, State->TetrominoPosYInWell))
             {
                 SetWellBlockState(Well, BLOCK_STATE_EMPTY, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
                 State->TetrominoPosXInWell -= 1;
@@ -181,7 +190,7 @@ GAME_UPDATE_AND_RENDER(UpdateAndRender)
         }
         else if(Input->PressedKey == KEY_RIGHT)
         {
-            if(State->TetrominoPosXInWell < Well->Width - 1)
+            if(State->TetrominoPosXInWell < Well->Width - 1 && !WellBlockIsFilled(Well, State->TetrominoPosXInWell + 1, State->TetrominoPosYInWell))
             {
                 SetWellBlockState(Well, BLOCK_STATE_EMPTY, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
                 State->TetrominoPosXInWell += 1;
@@ -202,48 +211,56 @@ GAME_UPDATE_AND_RENDER(UpdateAndRender)
         Well->Field[Index] = false;
     }
     */
-    /*
-    switch(State->TetroState)
+    localv u32 Accum = 0;
+    if(Accum >= 200)
     {
-        case TETRO_STATE_SPAWN:
+        switch(State->TetroState)
         {
-            SwitchBlock(Well, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
-            State->TetroState = TETRO_STATE_IN_PROGRESS;
-            break;
-        }
-        
-        case TETRO_STATE_IN_PROGRESS:
-        {
-            if(State->TetrominoPosYInWell <= 0 || IsBlockFilled(Well, State->TetrominoPosXInWell, State->TetrominoPosYInWell - 1))
+            case TETRO_STATE_SPAWN:
             {
-                State->TetroState = TETRO_STATE_FALL;
-            }
-            else
-            {
-                SwitchBlock(Well, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
-                State->TetrominoPosYInWell -= 1;
-                SwitchBlock(Well, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
+                State->TetrominoPosYInWell = Well->Height - 1;
+                State->TetrominoPosXInWell = Well->Width / 2;
+                
+                SetWellBlockState(Well, BLOCK_STATE_TETRO, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
+                State->TetroState = TETRO_STATE_IN_PROGRESS;
+                break;
             }
             
-            break;
+            case TETRO_STATE_IN_PROGRESS:
+            {
+                assert(State->TetrominoPosYInWell >= 0);
+                if(State->TetrominoPosYInWell == 0 || WellBlockIsFilled(Well, State->TetrominoPosXInWell, State->TetrominoPosYInWell - 1)) // TODO(annad): is block filled?...
+                {
+                    State->TetroState = TETRO_STATE_FALL;
+                }
+                else
+                {
+                    SetWellBlockState(Well, BLOCK_STATE_EMPTY, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
+                    State->TetrominoPosYInWell -= 1;
+                    SetWellBlockState(Well, BLOCK_STATE_TETRO, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
+                }
+                
+                break;
+            }
+            
+            case TETRO_STATE_FALL:
+            {
+                SetWellBlockState(Well, BLOCK_STATE_FILLED, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
+                State->TetroState = TETRO_STATE_SPAWN;
+                break;
+            }
+            
+            default:
+            {
+                assert(1 != 1);
+                break;
+            }
         }
-        
-        case TETRO_STATE_FALL:
-        {
-            SwitchBlock(Well, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
-            Well->Field[State->TetrominoPosYInWell * Well->Width + State->TetrominoPosXInWell] = BLOCK_STATE_FILLED;
-            State->TetrominoPosYInWell = Well->Height - 1;
-            State->TetroState = TETRO_STATE_SPAWN;
-            break;
-        }
-        
-        default:
-        {
-            assert(1 != 1);
-            break;
-        }
+        Accum = 0;
     }
-    */
+    
+    Accum += Time->dt;
+    
     RenderWell(Buffer, Well);
     
     
