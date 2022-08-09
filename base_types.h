@@ -25,6 +25,7 @@ typedef float r32;
 typedef double r64;
 
 typedef u32 b32;
+typedef bool b8;
 
 #define internal static
 #define globalv static

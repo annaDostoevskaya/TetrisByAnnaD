@@ -27,29 +27,43 @@ enum tetrominoes
     TETROMINO_TOTAL
 };
 
+enum tetro_states
+{
+    TETRO_STATE_SPAWN = 0,
+    TETRO_STATE_IN_PROGRESS,
+    TETRO_STATE_FALL,
+    
+    TETRO_STATE_TOTAL
+};
+
 struct well
 {
-    u16 Width;
-    u16 Height;
-    
     u32 PosX;
     u32 PosY;
     
+    // NOTE(annad): The position at which the inner square of the field begins.
+    u32 FieldPosX;
+    u32 FieldPosY;
+    
+    u16 Width;
+    u16 Height;
+    
+    // NOTE(annad): Width and Height with borders.
+    u16 FullWidth;
+    u16 FullHeight;
+    
     u32 CellSideSize;
     
-    u8 Field[WELL_WIDTH * WELL_HEIGHT];
-};
-
-struct tetromino
-{
-    tetrominoes TetrominoType;
-    u16 WellPosX;
-    u16 WellPosY;
+    b8 Field[WELL_WIDTH * WELL_HEIGHT];
+    b8 ShadowField[WELL_WIDTH * WELL_HEIGHT];
 };
 
 struct game_state
 {
+#ifdef _GAME_INTERNAL
+    // NOTE(annad): Just for test, see DEBUG_GetInfo()
     bool stub;
+#endif
     b32 Initialized;
     
     u32 PosX;
@@ -59,6 +73,12 @@ struct game_state
     u32 MetaPixelSize;
     well Well;
     // tetrimo CurrentTetrimo;
+    
+    tetrominoes TetrominoType;
+    tetro_states TetroState;
+    u16 TetrominoPosXInWell;
+    u16 TetrominoPosYInWell;
+    u32 TetrimoDownTime;
 };
 
 #endif //GAME_H

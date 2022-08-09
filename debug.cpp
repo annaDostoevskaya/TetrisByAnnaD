@@ -134,3 +134,37 @@ internal void DEBUG_CheckAllPositions(game_buffer *Buffer, game_time *Time, u32 
     
     Accum += Time->dt;
 }
+
+
+void DEBUG_CheckWell(well *Well, game_time *Time)
+{
+    localv u32 Accum = 0;
+    localv u32 Index = 0;
+    
+    if(Accum >= 100)
+    {
+        if(Index < Well->Width * Well->Height)
+        {
+            if(Index == 0)
+            {
+                if(Well->Field[Well->Width * Well->Height - 1])
+                {
+                    Well->Field[Well->Width * Well->Height - 1] = false;
+                }
+                Well->Field[Index++] = true;
+            }
+            else
+            {
+                Well->Field[Index - 1] = false;
+                Well->Field[Index++] = true;
+            }
+        }
+        else
+        {
+            Index = 0;
+        }
+        Accum = 0;
+    }
+    
+    Accum += Time->dt;
+}

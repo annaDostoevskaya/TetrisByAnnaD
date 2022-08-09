@@ -58,20 +58,27 @@ internal void DrawRectangle(game_buffer *Buffer,
 
 internal void RenderWell(game_buffer *Buffer, well *Well)
 {
-    for (u32 Y = 0; Y < Well->Height + 2; Y++)
+    DrawRectangle(Buffer, 
+                  Well->PosX, Well->PosY, 
+                  (Well->FullWidth) * Well->CellSideSize, (Well->FullHeight) * Well->CellSideSize,
+                  META_PIXEL_COLOR, META_PIXEL_COLOR, META_PIXEL_COLOR);
+    
+    DrawRectangle(Buffer, 
+                  Well->FieldPosX, Well->FieldPosY, 
+                  Well->Width * Well->CellSideSize, Well->Height * Well->CellSideSize,
+                  0.0f, 0.0f, 0.0f);
+    
+    for (u32 Y = 0; Y < Well->Height; Y++)
     {
-        u32 GlobalPosY = Well->PosY + Y * Well->CellSideSize;
-        for (u32 X = 0; X < Well->Width + 2 ; X++)
+        u32 CellPosY = Well->FieldPosY - Y * Well->CellSideSize;
+        for (u32 X = 0; X < Well->Width; X++)
         {
-            if (X == 0 || Y == 0 || 
-                X == (Well->Width + 2) - 1 || 
-                Y == (Well->Height + 2) - 1 ||
-                Well->Field[Y * Well->Width + X]) // NOTE(annad): DANGEROUS: What if X or Y with Well->Width + 2 or Well->Height + 2 move to this Well->Field?..
+            if (Well->Field[Y * Well->Width + X])
             {
-                u32 GlobalPosX = Well->PosX + X * Well->CellSideSize;
+                u32 CellPosX = Well->FieldPosX + X * Well->CellSideSize;
                 
                 DrawRectangle(Buffer, 
-                              GlobalPosX, GlobalPosY, 
+                              CellPosX, CellPosY,
                               Well->CellSideSize, Well->CellSideSize,
                               META_PIXEL_COLOR, META_PIXEL_COLOR, META_PIXEL_COLOR);
             }
@@ -79,7 +86,21 @@ internal void RenderWell(game_buffer *Buffer, well *Well)
     }
 }
 
-#define _GAME_INTERNAL
+internal void SwitchBlock(well *Well, u16 TetroX, u16 TetroY)
+{
+    assert(Well->Height > TetroY);
+    
+    TetroY = Well->Height - TetroY - 1;
+    Well->Field[TetroY * Well->Width + TetroX] = !Well->Field[TetroY * Well->Width + TetroX];
+}
+
+internal b32 IsBlockFilled(well *Well, u16 TetroX, u16 TetroY)
+{
+    assert(Well->Height > TetroY);
+    TetroY = Well->Height - TetroY - 1;
+    return Well->Field[TetroY * Well->Width + TetroX] == 1;
+}
+
 #ifdef _GAME_INTERNAL
 #include "debug.cpp"
 #endif
@@ -96,21 +117,77 @@ GAME_UPDATE_AND_RENDER(UpdateAndRender)
     
     if(State->Initialized != (b32)true)
     {
-        State->MetaPixelSize = Buffer->Height / 54;
+        State->MetaPixelSize = Buffer->Height / 55;
         
         Well->CellSideSize = State->MetaPixelSize * 3;
         Well->Width = WELL_WIDTH;
         Well->Height = WELL_HEIGHT;
-        Well->PosX = Buffer->Width / 2 - (Well->Width * Well->CellSideSize / 2);
-        Well->PosY = Well->CellSideSize;
+        Well->FullWidth = Well->Width + 2;
+        Well->FullHeight = Well->Height + 2;
+        Well->PosX = Buffer->Width / 2 - (Well->FullWidth * Well->CellSideSize / 2);
+        Well->PosY = Well->FullHeight * Well->CellSideSize;
+        Well->FieldPosX = Well->PosX + Well->CellSideSize;
+        Well->FieldPosY = Well->PosY - Well->CellSideSize;
         
         State->PosX = Buffer->Width / 2;
         State->PosY = Buffer->Height / 2;
         State->PlayerSize = State->MetaPixelSize;
         
+        State->TetroState = TETRO_STATE_SPAWN;
+        State->TetrominoType = TETROMINO_BASE;
+        State->TetrominoPosXInWell = 0;
+        State->TetrominoPosYInWell = Well->Height - 1;
+        State->TetrimoDownTime = 0;
+        
         State->Initialized = true;
     }
     
+    // DEBUG_CheckWell(Well, Time);
+    
+    /*
+    for (u32 Index = 0; Index < Well->Height * Well->Width; Index++)
+    {
+        Well->Field[Index] = false;
+    }
+    */
+    switch(State->TetroState)
+    {
+        case TETRO_STATE_SPAWN:
+        {
+            SwitchBlock(Well, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
+            State->TetroState = TETRO_STATE_IN_PROGRESS;
+            break;
+        }
+        
+        case TETRO_STATE_IN_PROGRESS:
+        {
+            if(State->TetrominoPosYInWell <= 0 || IsBlockFilled(Well, State->TetrominoPosXInWell, State->TetrominoPosYInWell - 1))
+            {
+                State->TetroState = TETRO_STATE_FALL;
+            }
+            else
+            {
+                SwitchBlock(Well, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
+                State->TetrominoPosYInWell -= 1;
+                SwitchBlock(Well, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
+            }
+            
+            break;
+        }
+        
+        case TETRO_STATE_FALL:
+        {
+            State->TetrominoPosYInWell = Well->Height - 1;
+            State->TetroState = TETRO_STATE_SPAWN;
+            break;
+        }
+        
+        default:
+        {
+            assert(1 != 1);
+            break;
+        }
+    }
     
     RenderWell(Buffer, Well);
     
@@ -126,11 +203,17 @@ GAME_UPDATE_AND_RENDER(UpdateAndRender)
         }
         else if(Input->PressedKey == KEY_LEFT)
         {
-            State->PosX -= 10;
+            if(State->TetrominoPosXInWell < Well->Width)
+            {
+                State->TetrominoPosXInWell += 1;
+            }
         }
         else if(Input->PressedKey == KEY_RIGHT)
         {
-            State->PosX += 10;
+            if(State->TetrominoPosXInWell > 0)
+            {
+                State->TetrominoPosXInWell -= 1;
+            }
         }
         else if(Input->PressedKey == KEY_SPACE)
         {
@@ -139,9 +222,9 @@ GAME_UPDATE_AND_RENDER(UpdateAndRender)
     }
     
     
-    DrawRectangle(Buffer, State->PosX, State->PosY, State->PlayerSize, State->PlayerSize, META_PIXEL_COLOR, META_PIXEL_COLOR, META_PIXEL_COLOR);
+    // DrawRectangle(Buffer, State->PosX, State->PosY, State->PlayerSize, State->PlayerSize, META_PIXEL_COLOR, META_PIXEL_COLOR, META_PIXEL_COLOR);
     
-    DEBUG_CheckAllPositions(Buffer, Time, State->MetaPixelSize * 5);
+    DEBUG_CheckAllPositions(Buffer, Time, Well->CellSideSize);
     DEBUG_DrawGrid(Buffer, Well->CellSideSize);
     // DrawRectangle(Buffer, 0, Buffer->Height, 50, 50, META_PIXEL_COLOR, META_PIXEL_COLOR, META_PIXEL_COLOR);
     // DEBUG_DrawELT(Buffer);
