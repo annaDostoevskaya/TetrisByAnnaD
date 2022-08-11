@@ -168,3 +168,53 @@ void DEBUG_CheckWell(well *Well, game_time *Time)
     
     Accum += Time->dt;
 }
+
+void DEBUG_Draw_1(game_buffer *Buffer, U32Vec2 Pos)
+{
+    u32 *Pixels = (u32 *)Buffer->Memory;
+    
+    for (u32 Y = Pos.Y; Y < Pos.Y + 10; Y++)
+    {
+        for (u32 X = Pos.X; X < Pos.X + 5; X++)
+        {
+            Pixels[Y * Buffer->Width + X] = 0xFFFFFFFF;
+        }
+    }
+}
+
+void DEBUG_Draw_0(game_buffer *Buffer, U32Vec2 Pos)
+{
+    u32 *Pixels = (u32 *)Buffer->Memory;
+    
+    for (u32 Y = Pos.Y; Y < Pos.Y + 10; Y++)
+    {
+        for (u32 X = Pos.X; X < Pos.X + 10; X++)
+        {
+            Pixels[Y * Buffer->Width + X] = 0xFFFFFFFF;
+        }
+    }
+    
+    Pos.X += 2;
+    Pos.Y += 2;
+    
+    for (u32 Y = Pos.Y; Y < Pos.Y + 5; Y++)
+    {
+        for (u32 X = Pos.X; X < Pos.X + 5; X++)
+        {
+            Pixels[Y * Buffer->Width + X] = 0x0;
+        }
+    }
+}
+
+void DEBUG_BoolInScreen(game_buffer *Buffer, b32 state)
+{
+    U32Vec2 Pos = {100, 100};
+    if(state == 1)
+    {
+        DEBUG_Draw_1(Buffer, Pos);
+    }
+    else
+    {
+        DEBUG_Draw_0(Buffer, Pos);
+    }
+}

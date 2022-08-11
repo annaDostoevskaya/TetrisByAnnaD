@@ -59,23 +59,23 @@ internal void DrawRectangle(game_buffer *Buffer,
 internal void RenderWell(game_buffer *Buffer, well *Well)
 {
     DrawRectangle(Buffer, 
-                  Well->PosX, Well->PosY, 
+                  Well->Pos.X, Well->Pos.Y, 
                   (Well->FullWidth) * Well->CellSideSize, (Well->FullHeight) * Well->CellSideSize,
                   META_PIXEL_COLOR, META_PIXEL_COLOR, META_PIXEL_COLOR);
     
     DrawRectangle(Buffer, 
-                  Well->FieldPosX, Well->FieldPosY, 
+                  Well->FieldPos.X, Well->FieldPos.Y, 
                   Well->Width * Well->CellSideSize, Well->Height * Well->CellSideSize,
                   0.0f, 0.0f, 0.0f);
     
     for (u32 Y = 0; Y < Well->Height; Y++)
     {
-        u32 CellPosY = Well->FieldPosY - Y * Well->CellSideSize;
+        u32 CellPosY = Well->FieldPos.Y - Y * Well->CellSideSize;
         for (u32 X = 0; X < Well->Width; X++)
         {
             if (Well->Field[Y * Well->Width + X])
             {
-                u32 CellPosX = Well->FieldPosX + X * Well->CellSideSize;
+                u32 CellPosX = Well->FieldPos.X + X * Well->CellSideSize;
                 
                 DrawRectangle(Buffer, 
                               CellPosX, CellPosY,
@@ -84,29 +84,6 @@ internal void RenderWell(game_buffer *Buffer, well *Well)
             }
         }
     }
-}
-
-internal void SwitchBlock(well *Well, u16 TetroX, u16 TetroY)
-{
-    assert(Well->Height > TetroY);
-    
-    TetroY = Well->Height - TetroY - 1;
-    
-    if(Well->Field[TetroY * Well->Width + TetroX] == BLOCK_STATE_EMPTY)
-    {
-        Well->Field[TetroY * Well->Width + TetroX] = BLOCK_STATE_TETRO;
-    }
-    else if(Well->Field[TetroY * Well->Width + TetroX] == BLOCK_STATE_TETRO)
-    {
-        Well->Field[TetroY * Well->Width + TetroX] = BLOCK_STATE_EMPTY;
-    }
-}
-
-internal b32 IsBlockFilled(well *Well, u16 TetroX, u16 TetroY)
-{
-    assert(Well->Height > TetroY);
-    TetroY = Well->Height - TetroY - 1;
-    return Well->Field[TetroY * Well->Width + TetroX] != BLOCK_STATE_EMPTY;
 }
 
 inline void SetWellBlockState(well *Well, blocks_states State, u16 PosX, u16 PosY)
@@ -128,6 +105,15 @@ inline b32 WellBlockIsFilled(well *Well, u16 PosX, u16 PosY)
     return Well->Field[PosY * Well->Width + PosX] == BLOCK_STATE_FILLED;
 }
 
+inline b32 WellBlockIs(well *Well, blocks_states State, u16 PosX, u16 PosY)
+{
+    assert(PosX < Well->Width);
+    assert(PosY < Well->Height);
+    assert(PosX >= 0 && PosY >= 0);
+    PosY = Well->Height - PosY - 1;
+    return Well->Field[PosY * Well->Width + PosX] == State;
+}
+
 #ifdef _GAME_INTERNAL
 #include "debug.cpp"
 #endif
@@ -144,6 +130,10 @@ GAME_UPDATE_AND_RENDER(UpdateAndRender)
     
     if(State->Initialized != (b32)true)
     {
+#ifdef _GAME_INTERNAL
+        State->BoolState = 1;
+#endif
+        
         State->MetaPixelSize = Buffer->Height / 55;
         
         Well->CellSideSize = State->MetaPixelSize * 3;
@@ -151,14 +141,12 @@ GAME_UPDATE_AND_RENDER(UpdateAndRender)
         Well->Height = WELL_HEIGHT;
         Well->FullWidth = Well->Width + 2;
         Well->FullHeight = Well->Height + 2;
-        Well->PosX = Buffer->Width / 2 - (Well->FullWidth * Well->CellSideSize / 2);
-        Well->PosY = Well->FullHeight * Well->CellSideSize;
-        Well->FieldPosX = Well->PosX + Well->CellSideSize;
-        Well->FieldPosY = Well->PosY - Well->CellSideSize;
         
-        State->PosX = Buffer->Width / 2;
-        State->PosY = Buffer->Height / 2;
-        State->PlayerSize = State->MetaPixelSize;
+        Well->Pos.X = Buffer->Width / 2 - (Well->FullWidth * Well->CellSideSize / 2);
+        Well->Pos.Y = Well->FullHeight * Well->CellSideSize;
+        
+        Well->FieldPos.X = Well->Pos.X + Well->CellSideSize;
+        Well->FieldPos.Y = Well->Pos.Y - Well->CellSideSize;
         
         State->TetroState = TETRO_STATE_SPAWN;
         State->TetrominoType = TETROMINO_BASE;
@@ -169,38 +157,13 @@ GAME_UPDATE_AND_RENDER(UpdateAndRender)
         State->Initialized = true;
     }
     
+    if(WellBlockIs(Well, BLOCK_STATE_TETRO, State->TetrominoPosXInWell, State->TetrominoPosYInWell))
     {
-        // NOTE(annad): Input handling.
-        if(Input->PressedKey == KEY_UP)
-        {
-            State->PosY += 10;
-        }
-        else if(Input->PressedKey == KEY_DOWN)
-        {
-            State->PosY -= 10;
-        }
-        else if(Input->PressedKey == KEY_LEFT)
-        {
-            if(State->TetrominoPosXInWell > 0 && !WellBlockIsFilled(Well, State->TetrominoPosXInWell - 1, State->TetrominoPosYInWell))
-            {
-                SetWellBlockState(Well, BLOCK_STATE_EMPTY, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
-                State->TetrominoPosXInWell -= 1;
-                SetWellBlockState(Well, BLOCK_STATE_TETRO, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
-            }
-        }
-        else if(Input->PressedKey == KEY_RIGHT)
-        {
-            if(State->TetrominoPosXInWell < Well->Width - 1 && !WellBlockIsFilled(Well, State->TetrominoPosXInWell + 1, State->TetrominoPosYInWell))
-            {
-                SetWellBlockState(Well, BLOCK_STATE_EMPTY, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
-                State->TetrominoPosXInWell += 1;
-                SetWellBlockState(Well, BLOCK_STATE_TETRO, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
-            }
-        }
-        else if(Input->PressedKey == KEY_SPACE)
-        {
-            State->PlayerSize += 1;
-        }
+        State->BoolState = 1;
+    }
+    else
+    {
+        State->BoolState = 0;
     }
     
     // DEBUG_CheckWell(Well, Time);
@@ -212,7 +175,7 @@ GAME_UPDATE_AND_RENDER(UpdateAndRender)
     }
     */
     localv u32 Accum = 0;
-    if(Accum >= 200)
+    if(Accum >= 500)
     {
         switch(State->TetroState)
         {
@@ -263,12 +226,59 @@ GAME_UPDATE_AND_RENDER(UpdateAndRender)
     
     RenderWell(Buffer, Well);
     
-    
     // DrawRectangle(Buffer, State->PosX, State->PosY, State->PlayerSize, State->PlayerSize, META_PIXEL_COLOR, META_PIXEL_COLOR, META_PIXEL_COLOR);
     
     DEBUG_CheckAllPositions(Buffer, Time, Well->CellSideSize);
     DEBUG_DrawGrid(Buffer, Well->CellSideSize);
     // DrawRectangle(Buffer, 0, Buffer->Height, 50, 50, META_PIXEL_COLOR, META_PIXEL_COLOR, META_PIXEL_COLOR);
     // DEBUG_DrawELT(Buffer);
+    
+    {
+        if(!WellBlockIs(Well, BLOCK_STATE_TETRO, State->TetrominoPosXInWell, State->TetrominoPosYInWell))
+        {
+            // NOTE(annad): Input handling.
+            if(Input->PressedKey == KEY_UP)
+            {
+                ;
+            }
+            else if(Input->PressedKey == KEY_DOWN)
+            {
+                if(State->TetrominoPosYInWell == 0 || WellBlockIsFilled(Well, State->TetrominoPosXInWell, State->TetrominoPosYInWell - 1)) // TODO(annad): is block filled?...
+                {
+                    State->TetroState = TETRO_STATE_FALL;
+                }
+                else
+                {
+                    SetWellBlockState(Well, BLOCK_STATE_EMPTY, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
+                    State->TetrominoPosYInWell -= 1;
+                    SetWellBlockState(Well, BLOCK_STATE_TETRO, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
+                }
+            }
+            else if(Input->PressedKey == KEY_LEFT)
+            {
+                if(State->TetrominoPosXInWell > 0 && !WellBlockIsFilled(Well, State->TetrominoPosXInWell - 1, State->TetrominoPosYInWell))
+                {
+                    SetWellBlockState(Well, BLOCK_STATE_EMPTY, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
+                    State->TetrominoPosXInWell -= 1;
+                    SetWellBlockState(Well, BLOCK_STATE_TETRO, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
+                }
+            }
+            else if(Input->PressedKey == KEY_RIGHT)
+            {
+                if(State->TetrominoPosXInWell < Well->Width - 1 && !WellBlockIsFilled(Well, State->TetrominoPosXInWell + 1, State->TetrominoPosYInWell))
+                {
+                    SetWellBlockState(Well, BLOCK_STATE_EMPTY, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
+                    State->TetrominoPosXInWell += 1;
+                    SetWellBlockState(Well, BLOCK_STATE_TETRO, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
+                }
+            }
+            else if(Input->PressedKey == KEY_SPACE)
+            {
+                __debugbreak();
+            }
+        }
+    }
+    
+    DEBUG_BoolInScreen(Buffer, State->BoolState);
 }
 

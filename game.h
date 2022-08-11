@@ -12,6 +12,22 @@ Description: <empty>
 #define WELL_WIDTH 9
 #define WELL_HEIGHT 16
 
+struct U8Vec2
+{
+    u8 X;
+    u8 Y;
+};
+
+struct U32Vec2
+{
+    u32 X;
+    u32 Y;
+};
+
+//
+//
+//
+
 enum tetrominoes 
 {
     TETROMINO_EMPTY = 0,
@@ -45,12 +61,10 @@ enum blocks_states
 
 struct well
 {
-    u32 PosX;
-    u32 PosY;
+    U32Vec2 Pos;
     
     // NOTE(annad): The position at which the inner square of the field begins.
-    u32 FieldPosX;
-    u32 FieldPosY;
+    U32Vec2 FieldPos;
     
     u16 Width;
     u16 Height;
@@ -69,12 +83,9 @@ struct game_state
 #ifdef _GAME_INTERNAL
     // NOTE(annad): Just for test, see DEBUG_GetInfo()
     bool stub;
+    b32 BoolState;
 #endif
     b32 Initialized;
-    
-    u32 PosX;
-    u32 PosY;
-    u32 PlayerSize;
     
     u32 MetaPixelSize;
     well Well;
@@ -84,6 +95,7 @@ struct game_state
     tetro_states TetroState;
     u16 TetrominoPosXInWell;
     u16 TetrominoPosYInWell;
+    
     u32 TetrimoDownTime;
 };
 
