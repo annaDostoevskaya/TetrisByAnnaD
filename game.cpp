@@ -12,11 +12,10 @@ Description: <empty>
 
 #include "sdl_game.cpp"
 
-#include <assert.h>
-
 #define WHITE_COLOR_RGB 0.93f
 #define META_PIXEL_COLOR 0.93f
 
+#include <assert.h>
 
 internal void DrawRectangle(game_buffer *Buffer, 
                             i32 PosX, i32 PosY, u32 W, u32 H,
@@ -56,67 +55,28 @@ internal void DrawRectangle(game_buffer *Buffer,
     }
 }
 
-internal void RenderWell(game_buffer *Buffer, well *Well)
+#include "well.cpp"
+
+#ifdef _GAME_INTERNAL
+#include "debug.cpp"
+#include <string.h>
+#endif
+
+void DrawTetro(well *Well, blocks_states BlockState, u8 *TetroContent, u16 TetroPosX, u16 TetroPosY)
 {
-    DrawRectangle(Buffer, 
-                  Well->Pos.X, Well->Pos.Y, 
-                  (Well->FullWidth) * Well->CellSideSize, (Well->FullHeight) * Well->CellSideSize,
-                  META_PIXEL_COLOR, META_PIXEL_COLOR, META_PIXEL_COLOR);
-    
-    DrawRectangle(Buffer, 
-                  Well->FieldPos.X, Well->FieldPos.Y, 
-                  Well->Width * Well->CellSideSize, Well->Height * Well->CellSideSize,
-                  0.0f, 0.0f, 0.0f);
-    
-    for (u32 Y = 0; Y < Well->Height; Y++)
+    for(u16 RelY = 0; RelY < TETRO_MAX_HEIGHT; RelY += 1)
     {
-        u32 CellPosY = Well->FieldPos.Y - Y * Well->CellSideSize;
-        for (u32 X = 0; X < Well->Width; X++)
+        u16 GlobalY = TetroPosY - RelY;
+        for(u16 RelX = 0; RelX < TETRO_MAX_WIDTH; RelX += 1)
         {
-            if (Well->Field[Y * Well->Width + X])
+            u16 GlobalX = TetroPosX + RelX;
+            if(TetroContent[RelY * TETRO_MAX_WIDTH + RelX])
             {
-                u32 CellPosX = Well->FieldPos.X + X * Well->CellSideSize;
-                
-                DrawRectangle(Buffer, 
-                              CellPosX, CellPosY,
-                              Well->CellSideSize, Well->CellSideSize,
-                              META_PIXEL_COLOR, META_PIXEL_COLOR, META_PIXEL_COLOR);
+                SetWellBlockState(Well, BlockState, GlobalX, GlobalY);
             }
         }
     }
 }
-
-inline void SetWellBlockState(well *Well, blocks_states State, u16 PosX, u16 PosY)
-{
-    assert(PosX < Well->Width);
-    assert(PosY < Well->Height);
-    assert(PosX >= 0 && PosY >= 0);
-    
-    PosY = Well->Height - PosY - 1;
-    Well->Field[PosY * Well->Width + PosX] = State;
-}
-
-inline b32 WellBlockIsFilled(well *Well, u16 PosX, u16 PosY)
-{
-    assert(PosX < Well->Width);
-    assert(PosY < Well->Height);
-    assert(PosX >= 0 && PosY >= 0);
-    PosY = Well->Height - PosY - 1;
-    return Well->Field[PosY * Well->Width + PosX] == BLOCK_STATE_FILLED;
-}
-
-inline b32 WellBlockIs(well *Well, blocks_states State, u16 PosX, u16 PosY)
-{
-    assert(PosX < Well->Width);
-    assert(PosY < Well->Height);
-    assert(PosX >= 0 && PosY >= 0);
-    PosY = Well->Height - PosY - 1;
-    return Well->Field[PosY * Well->Width + PosX] == State;
-}
-
-#ifdef _GAME_INTERNAL
-#include "debug.cpp"
-#endif
 
 GAME_UPDATE_AND_RENDER(UpdateAndRender)
 {
@@ -126,7 +86,6 @@ GAME_UPDATE_AND_RENDER(UpdateAndRender)
     // NOTE(saiel): Objectively, this UB.
     game_state *State = (game_state *)Memory->PermanentStorage;
     well *Well = &State->Well;
-    
     
     if(State->Initialized != (b32)true)
     {
@@ -149,7 +108,15 @@ GAME_UPDATE_AND_RENDER(UpdateAndRender)
         Well->FieldPos.Y = Well->Pos.Y - Well->CellSideSize;
         
         State->TetroState = TETRO_STATE_SPAWN;
-        State->TetrominoType = TETROMINO_BASE;
+        
+        // TODO(annad): Write special function for loading tetros. mb memcpy?..
+        u8 TetroDefault[TETRO_MAX_WIDTH * TETRO_MAX_HEIGHT] = {
+            0, 1, 0, 0,
+            0, 1, 0, 0,
+            1, 1, 1, 0
+        };
+        memcpy((void*)State->TetroParts, (void*)TetroDefault, TETRO_MAX_WIDTH * TETRO_MAX_HEIGHT);
+        
         State->TetrominoPosXInWell = Well->Width / 2;
         State->TetrominoPosYInWell = Well->Height - 1;
         State->TetrimoDownTime = 0;
@@ -168,12 +135,6 @@ GAME_UPDATE_AND_RENDER(UpdateAndRender)
     
     // DEBUG_CheckWell(Well, Time);
     
-    /*
-    for (u32 Index = 0; Index < Well->Height * Well->Width; Index++)
-    {
-        Well->Field[Index] = false;
-    }
-    */
     localv u32 Accum = 0;
     if(Accum >= 500)
     {
@@ -181,10 +142,12 @@ GAME_UPDATE_AND_RENDER(UpdateAndRender)
         {
             case TETRO_STATE_SPAWN:
             {
+                // it is center of drawing
                 State->TetrominoPosYInWell = Well->Height - 1;
                 State->TetrominoPosXInWell = Well->Width / 2;
                 
-                SetWellBlockState(Well, BLOCK_STATE_TETRO, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
+                DrawTetro(Well, BLOCK_STATE_TETRO, State->TetroParts, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
+                
                 State->TetroState = TETRO_STATE_IN_PROGRESS;
                 break;
             }
@@ -192,15 +155,15 @@ GAME_UPDATE_AND_RENDER(UpdateAndRender)
             case TETRO_STATE_IN_PROGRESS:
             {
                 assert(State->TetrominoPosYInWell >= 0);
-                if(State->TetrominoPosYInWell == 0 || WellBlockIsFilled(Well, State->TetrominoPosXInWell, State->TetrominoPosYInWell - 1)) // TODO(annad): is block filled?...
+                if(State->TetrominoPosYInWell == 4 || WellBlockIsFilled(Well, State->TetrominoPosXInWell, State->TetrominoPosYInWell - 1)) // TODO(annad): is block filled?...
                 {
                     State->TetroState = TETRO_STATE_FALL;
                 }
                 else
                 {
-                    SetWellBlockState(Well, BLOCK_STATE_EMPTY, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
+                    DrawTetro(Well, BLOCK_STATE_EMPTY, State->TetroParts, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
                     State->TetrominoPosYInWell -= 1;
-                    SetWellBlockState(Well, BLOCK_STATE_TETRO, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
+                    DrawTetro(Well, BLOCK_STATE_TETRO, State->TetroParts, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
                 }
                 
                 break;
@@ -208,7 +171,7 @@ GAME_UPDATE_AND_RENDER(UpdateAndRender)
             
             case TETRO_STATE_FALL:
             {
-                SetWellBlockState(Well, BLOCK_STATE_FILLED, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
+                DrawTetro(Well, BLOCK_STATE_FILLED, State->TetroParts, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
                 State->TetroState = TETRO_STATE_SPAWN;
                 break;
             }
@@ -234,7 +197,7 @@ GAME_UPDATE_AND_RENDER(UpdateAndRender)
     // DEBUG_DrawELT(Buffer);
     
     {
-        if(!WellBlockIs(Well, BLOCK_STATE_TETRO, State->TetrominoPosXInWell, State->TetrominoPosYInWell))
+        if(WellBlockIs(Well, BLOCK_STATE_TETRO, State->TetrominoPosXInWell, State->TetrominoPosYInWell))
         {
             // NOTE(annad): Input handling.
             if(Input->PressedKey == KEY_UP)

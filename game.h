@@ -9,25 +9,13 @@ Description: <empty>
 #ifndef GAME_H
 #define GAME_H
 
-#define WELL_WIDTH 9
-#define WELL_HEIGHT 16
-
-struct U8Vec2
-{
-    u8 X;
-    u8 Y;
-};
-
-struct U32Vec2
-{
-    u32 X;
-    u32 Y;
-};
-
 //
 //
 //
 
+#include "well.h"
+
+/* 
 enum tetrominoes 
 {
     TETROMINO_EMPTY = 0,
@@ -42,6 +30,7 @@ enum tetrominoes
     
     TETROMINO_TOTAL
 };
+ */
 
 enum tetro_states
 {
@@ -52,31 +41,8 @@ enum tetro_states
     TETRO_STATE_TOTAL
 };
 
-enum blocks_states
-{
-    BLOCK_STATE_EMPTY = 0,
-    BLOCK_STATE_FILLED,
-    BLOCK_STATE_TETRO,
-};
-
-struct well
-{
-    U32Vec2 Pos;
-    
-    // NOTE(annad): The position at which the inner square of the field begins.
-    U32Vec2 FieldPos;
-    
-    u16 Width;
-    u16 Height;
-    
-    // NOTE(annad): Width and Height with borders.
-    u16 FullWidth;
-    u16 FullHeight;
-    
-    u32 CellSideSize;
-    
-    blocks_states Field[WELL_WIDTH * WELL_HEIGHT];
-};
+#define TETRO_MAX_WIDTH 4
+#define TETRO_MAX_HEIGHT 4
 
 struct game_state
 {
@@ -91,11 +57,10 @@ struct game_state
     well Well;
     // tetrimo CurrentTetrimo;
     
-    tetrominoes TetrominoType;
     tetro_states TetroState;
     u16 TetrominoPosXInWell;
     u16 TetrominoPosYInWell;
-    
+    u8 TetroParts[TETRO_MAX_WIDTH * TETRO_MAX_HEIGHT];
     u32 TetrimoDownTime;
 };
 
