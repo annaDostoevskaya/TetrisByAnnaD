@@ -43,6 +43,30 @@ enum tetro_states
 
 #define TETRO_MAX_WIDTH 4
 #define TETRO_MAX_HEIGHT 4
+#define MAX_TETRO_SIZE 4
+
+//
+// math.h
+//
+
+struct u8Mtrx3x3
+{
+    u8 Content[3*3];
+};
+
+struct u8Mtrx1x3
+{
+    u8 Content[1*3];
+};
+
+void MultiplyMatrixes1x3By3x3(u8Mtrx1x3* m1x3, u8Mtrx3x3* m3x3, m1x3 *Dest)
+{
+    // TODO(annad): Find algorith for multiplying matrixes!!!
+}
+
+//
+// math.h
+//
 
 struct game_state
 {
@@ -60,8 +84,10 @@ struct game_state
     tetro_states TetroState;
     u16 TetrominoPosXInWell;
     u16 TetrominoPosYInWell;
-    u8 TetroParts[TETRO_MAX_WIDTH * TETRO_MAX_HEIGHT];
+    u8Vec2 TetroContent[MAX_TETRO_SIZE];
     u32 TetrimoDownTime;
+    
+    b32 Pause;
 };
 
 #endif //GAME_H

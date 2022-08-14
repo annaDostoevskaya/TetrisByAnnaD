@@ -62,8 +62,21 @@ internal void DrawRectangle(game_buffer *Buffer,
 #include <string.h>
 #endif
 
-void DrawTetro(well *Well, blocks_states BlockState, u8 *TetroContent, u16 TetroPosX, u16 TetroPosY)
+void DrawTetro(well *Well, blocks_states BlockState, u8Vec2 *TetroContent, u16 TetroPosX, u16 TetroPosY)
 {
+    // vectors representation
+    for(u32 i = 0; i < MAX_TETRO_SIZE; i++)
+    {
+        u8Vec2 *CurrentPart = &TetroContent[i];
+        u8 GlobalX = TetroPosX + CurrentPart->X;
+        u8 GlobalY = TetroPosY - CurrentPart->Y;
+        SetWellBlockState(Well, BlockState, GlobalX, GlobalY);
+    }
+    
+    // vs.
+    
+    // matrix representation
+    /*
     for(u16 RelY = 0; RelY < TETRO_MAX_HEIGHT; RelY += 1)
     {
         u16 GlobalY = TetroPosY - RelY;
@@ -76,7 +89,44 @@ void DrawTetro(well *Well, blocks_states BlockState, u8 *TetroContent, u16 Tetro
             }
         }
     }
+*/
 }
+
+b32 CheckTetroControl(well* Well, u8Vec2 *TetroContent, u16 TetroPosX, u16 TetroPosY)
+{
+    for(u32 i = 0; i < MAX_TETRO_SIZE; i++)
+    {
+        u8Vec2 *CurrentPart = &TetroContent[i];
+        u8 GlobalX = TetroPosX + CurrentPart->X;
+        u8 GlobalY = TetroPosY - CurrentPart->Y;
+        if(!WellBlockIs(Well, BLOCK_STATE_TETRO, GlobalX, GlobalY))
+            return false;
+    }
+    
+    return true;
+}
+
+void MoveTetro(well *Well, u8Vec2 *TetroContent, u16 *TetroPosX, u16 *TetroPosY)
+{
+    // pack to matrix 
+    
+    u8Mtrx1x3 Position = {
+        *TetroPosX, *TetroPosY, 1
+    };
+    
+    u8Vec2 MoveVector = {0, 1};
+    
+    u8Mtrx3x3 TranstionMatrix = {
+        1, 0, 0, 
+        0, 1, 0, 
+        MoveVector.X, MoveVector.Y, 1, 
+    };
+    
+    u8Mtrx3x3 Result = {};
+    
+    MultiplyMatrixes1x3By3x3(&Position, &TranstionMatrix, &Result);
+}
+
 
 GAME_UPDATE_AND_RENDER(UpdateAndRender)
 {
@@ -110,21 +160,22 @@ GAME_UPDATE_AND_RENDER(UpdateAndRender)
         State->TetroState = TETRO_STATE_SPAWN;
         
         // TODO(annad): Write special function for loading tetros. mb memcpy?..
-        u8 TetroDefault[TETRO_MAX_WIDTH * TETRO_MAX_HEIGHT] = {
-            0, 1, 0, 0,
-            0, 1, 0, 0,
-            1, 1, 1, 0
+        u8Vec2 TetroDefault[TETRO_MAX_WIDTH * TETRO_MAX_HEIGHT] = {
+            {0, 1}, {1, 1}, {2, 1}, {1, 0}
         };
-        memcpy((void*)State->TetroParts, (void*)TetroDefault, TETRO_MAX_WIDTH * TETRO_MAX_HEIGHT);
+        
+        memcpy((void*)State->TetroContent, (void*)TetroDefault, TETRO_MAX_WIDTH * TETRO_MAX_HEIGHT);
         
         State->TetrominoPosXInWell = Well->Width / 2;
         State->TetrominoPosYInWell = Well->Height - 1;
         State->TetrimoDownTime = 0;
         
+        State->Pause = false;
+        
         State->Initialized = true;
     }
     
-    if(WellBlockIs(Well, BLOCK_STATE_TETRO, State->TetrominoPosXInWell, State->TetrominoPosYInWell))
+    if(CheckTetroControl(Well, State->TetroContent, State->TetrominoPosXInWell, State->TetrominoPosYInWell))
     {
         State->BoolState = 1;
     }
@@ -134,58 +185,62 @@ GAME_UPDATE_AND_RENDER(UpdateAndRender)
     }
     
     // DEBUG_CheckWell(Well, Time);
-    
     localv u32 Accum = 0;
-    if(Accum >= 500)
-    {
-        switch(State->TetroState)
-        {
-            case TETRO_STATE_SPAWN:
-            {
-                // it is center of drawing
-                State->TetrominoPosYInWell = Well->Height - 1;
-                State->TetrominoPosXInWell = Well->Width / 2;
-                
-                DrawTetro(Well, BLOCK_STATE_TETRO, State->TetroParts, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
-                
-                State->TetroState = TETRO_STATE_IN_PROGRESS;
-                break;
-            }
-            
-            case TETRO_STATE_IN_PROGRESS:
-            {
-                assert(State->TetrominoPosYInWell >= 0);
-                if(State->TetrominoPosYInWell == 4 || WellBlockIsFilled(Well, State->TetrominoPosXInWell, State->TetrominoPosYInWell - 1)) // TODO(annad): is block filled?...
-                {
-                    State->TetroState = TETRO_STATE_FALL;
-                }
-                else
-                {
-                    DrawTetro(Well, BLOCK_STATE_EMPTY, State->TetroParts, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
-                    State->TetrominoPosYInWell -= 1;
-                    DrawTetro(Well, BLOCK_STATE_TETRO, State->TetroParts, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
-                }
-                
-                break;
-            }
-            
-            case TETRO_STATE_FALL:
-            {
-                DrawTetro(Well, BLOCK_STATE_FILLED, State->TetroParts, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
-                State->TetroState = TETRO_STATE_SPAWN;
-                break;
-            }
-            
-            default:
-            {
-                assert(1 != 1);
-                break;
-            }
-        }
-        Accum = 0;
-    }
     
-    Accum += Time->dt;
+    if(State->Pause == (b32)false)
+    {
+        if(Accum >= 500)
+        {
+            switch(State->TetroState)
+            {
+                case TETRO_STATE_SPAWN:
+                {
+                    // it is center of drawing
+                    State->TetrominoPosYInWell = Well->Height - 1;
+                    State->TetrominoPosXInWell = Well->Width / 2;
+                    
+                    DrawTetro(Well, BLOCK_STATE_TETRO, State->TetroContent, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
+                    
+                    State->TetroState = TETRO_STATE_IN_PROGRESS;
+                    break;
+                }
+                
+                case TETRO_STATE_IN_PROGRESS:
+                {
+                    assert(State->TetrominoPosYInWell >= 0);
+                    if(State->TetrominoPosYInWell == 2 || WellBlockIsFilled(Well, State->TetrominoPosXInWell, State->TetrominoPosYInWell - 1)) // TODO(annad): is block filled?...
+                    {
+                        State->TetroState = TETRO_STATE_FALL;
+                    }
+                    else
+                    {
+                        DrawTetro(Well, BLOCK_STATE_EMPTY, State->TetroContent, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
+                        MoveTetro(Well, State->TetroContent, &State->TetrominoPosXInWell, &State->TetrominoPosYInWell);
+                        // State->TetrominoPosYInWell -= 1;
+                        DrawTetro(Well, BLOCK_STATE_TETRO, State->TetroContent, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
+                    }
+                    
+                    break;
+                }
+                
+                case TETRO_STATE_FALL:
+                {
+                    DrawTetro(Well, BLOCK_STATE_FILLED, State->TetroContent, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
+                    State->TetroState = TETRO_STATE_SPAWN;
+                    break;
+                }
+                
+                default:
+                {
+                    assert(1 != 1);
+                    break;
+                }
+            }
+            Accum = 0;
+        }
+        
+        Accum += Time->dt;
+    }
     
     RenderWell(Buffer, Well);
     
@@ -197,7 +252,7 @@ GAME_UPDATE_AND_RENDER(UpdateAndRender)
     // DEBUG_DrawELT(Buffer);
     
     {
-        if(WellBlockIs(Well, BLOCK_STATE_TETRO, State->TetrominoPosXInWell, State->TetrominoPosYInWell))
+        if(CheckTetroControl(Well, State->TetroContent, State->TetrominoPosXInWell, State->TetrominoPosYInWell))
         {
             // NOTE(annad): Input handling.
             if(Input->PressedKey == KEY_UP)
@@ -212,32 +267,33 @@ GAME_UPDATE_AND_RENDER(UpdateAndRender)
                 }
                 else
                 {
-                    SetWellBlockState(Well, BLOCK_STATE_EMPTY, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
+                    DrawTetro(Well, BLOCK_STATE_EMPTY, State->TetroContent, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
                     State->TetrominoPosYInWell -= 1;
-                    SetWellBlockState(Well, BLOCK_STATE_TETRO, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
+                    DrawTetro(Well, BLOCK_STATE_TETRO, State->TetroContent, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
                 }
             }
             else if(Input->PressedKey == KEY_LEFT)
             {
                 if(State->TetrominoPosXInWell > 0 && !WellBlockIsFilled(Well, State->TetrominoPosXInWell - 1, State->TetrominoPosYInWell))
                 {
-                    SetWellBlockState(Well, BLOCK_STATE_EMPTY, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
+                    DrawTetro(Well, BLOCK_STATE_EMPTY, State->TetroContent, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
                     State->TetrominoPosXInWell -= 1;
-                    SetWellBlockState(Well, BLOCK_STATE_TETRO, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
+                    DrawTetro(Well, BLOCK_STATE_TETRO, State->TetroContent, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
                 }
             }
             else if(Input->PressedKey == KEY_RIGHT)
             {
                 if(State->TetrominoPosXInWell < Well->Width - 1 && !WellBlockIsFilled(Well, State->TetrominoPosXInWell + 1, State->TetrominoPosYInWell))
                 {
-                    SetWellBlockState(Well, BLOCK_STATE_EMPTY, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
+                    DrawTetro(Well, BLOCK_STATE_EMPTY, State->TetroContent, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
                     State->TetrominoPosXInWell += 1;
-                    SetWellBlockState(Well, BLOCK_STATE_TETRO, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
+                    DrawTetro(Well, BLOCK_STATE_TETRO, State->TetroContent, State->TetrominoPosXInWell, State->TetrominoPosYInWell);
                 }
             }
             else if(Input->PressedKey == KEY_SPACE)
             {
-                __debugbreak();
+                State->Pause = !State->Pause;
+                // __debugbreak();
             }
         }
     }

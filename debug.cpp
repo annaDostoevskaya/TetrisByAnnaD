@@ -76,17 +76,20 @@ internal void DEBUG_DrawELT(game_buffer *Buffer)
 
 internal void DEBUG_DrawGrid(game_buffer *Buffer, u32 GridCellSize)
 {
+    localv u32 shift = 74; // NOTE(annad): magic value calculated empirically so that the grid is level
     u32 *Pixels = (u32 *)Buffer->Memory;
     for(u32 Y = 0; Y < Buffer->Height; Y++)
     {
-        for(u32 X = 0; X < Buffer->Width; X++)
+        for(u32 X = shift; X < Buffer->Width + shift; X++)
         {
             if(X % GridCellSize == 0 || Y % GridCellSize == 0)
             {
-                Pixels[Y * Buffer->Width + X] = 0xFF111111;
+                Pixels[Y * Buffer->Width + X - shift] = 0xFF111111;
             }
         }
     }
+    
+    // shift++;
 }
 
 
@@ -169,7 +172,7 @@ void DEBUG_CheckWell(well *Well, game_time *Time)
     Accum += Time->dt;
 }
 
-void DEBUG_Draw_1(game_buffer *Buffer, U32Vec2 Pos)
+void DEBUG_Draw_1(game_buffer *Buffer, u32Vec2 Pos)
 {
     u32 *Pixels = (u32 *)Buffer->Memory;
     
@@ -182,7 +185,7 @@ void DEBUG_Draw_1(game_buffer *Buffer, U32Vec2 Pos)
     }
 }
 
-void DEBUG_Draw_0(game_buffer *Buffer, U32Vec2 Pos)
+void DEBUG_Draw_0(game_buffer *Buffer, u32Vec2 Pos)
 {
     u32 *Pixels = (u32 *)Buffer->Memory;
     
@@ -208,7 +211,7 @@ void DEBUG_Draw_0(game_buffer *Buffer, U32Vec2 Pos)
 
 void DEBUG_BoolInScreen(game_buffer *Buffer, b32 state)
 {
-    U32Vec2 Pos = {100, 100};
+    u32Vec2 Pos = {100, 100};
     if(state == 1)
     {
         DEBUG_Draw_1(Buffer, Pos);

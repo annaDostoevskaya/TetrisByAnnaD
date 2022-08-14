@@ -10,23 +10,23 @@ Description: <empty>
 #define WELL_H
 
 //
-//
+// math.h
 //
 
-struct U8Vec2
+struct u8Vec2
 {
     u8 X;
     u8 Y;
 };
 
-struct U32Vec2
+struct u32Vec2
 {
     u32 X;
     u32 Y;
 };
 
 //
-//
+// math. h
 //
 
 #define WELL_WIDTH 9
@@ -41,10 +41,10 @@ enum blocks_states
 
 struct well
 {
-    U32Vec2 Pos;
+    u32Vec2 Pos;
     
     // NOTE(annad): The position at which the inner square of the field begins.
-    U32Vec2 FieldPos;
+    u32Vec2 FieldPos;
     
     u16 Width;
     u16 Height;
