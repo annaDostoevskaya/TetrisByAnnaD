@@ -15,24 +15,7 @@ Description: <empty>
 
 #include "well.h"
 
-/* 
-enum tetrominoes 
-{
-    TETROMINO_EMPTY = 0,
-    
-    TETROMINO_BASE, // NOTE(annad): 1x1 tetomino. Just for tests.
-    
-    TETROMINO_STRAIGHT,
-    TETROMINO_SQUARE,
-    TETROMINO_T,
-    TETROMINO_L,
-    TETROMINO_SKEW,
-    
-    TETROMINO_TOTAL
-};
- */
-
-enum tetro_states
+enum tetro_state
 {
     TETRO_STATE_SPAWN = 0,
     TETRO_STATE_IN_PROGRESS,
@@ -41,7 +24,40 @@ enum tetro_states
     TETRO_STATE_TOTAL
 };
 
+#define SIZEOF_TETRO_BLOCK sizeof(i8Vec2)
 #define MAX_TETRO_SIZE 4
+
+enum tetro_type
+{
+    TETRO_O,
+    TETRO_T,
+    TETRO_L,
+    TETRO_J,
+    TETRO_Z,
+    TETRO_S,
+    TETRO_I,
+    
+    TETRO_TOTAL,
+};
+
+struct tetro
+{
+    i8Vec2 Tetrominos[TETRO_TOTAL][MAX_TETRO_SIZE];
+    
+    tetro_state State;
+    tetro_type Type;
+    
+    i16Vec2 *Pos;
+    i16Vec2 *ShadowPos;
+    i16Vec2 PosBuffers[2];
+    
+    i8Vec2 *Content;
+    i8Vec2 *ShadowContent;
+    i8Vec2 ContentBuffers[2][MAX_TETRO_SIZE];
+    
+    u32 DownTime;
+    u32 AccumTime;
+};
 
 struct game_state
 {
@@ -54,18 +70,7 @@ struct game_state
     
     u32 MetaPixelSize;
     well Well;
-    // tetrimo CurrentTetrimo;
-    
-    tetro_states TetroState;
-    i16Vec2 *TetroPos;
-    i16Vec2 *TetroShadowPos;
-    i16Vec2 TetroPosBuffers[2];
-    
-    i8Vec2 *TetroContent;
-    i8Vec2 *TetroShadowContent;
-    i8Vec2 TetroContentBuffers[2][MAX_TETRO_SIZE];
-    
-    u32 TetrimoDownTime;
+    tetro Tetro;
     
     b32 Pause;
 };
