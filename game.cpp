@@ -151,50 +151,6 @@ void DropTetro(well *Well, i8Vec2 *TetroContent, i16Vec2 *TetroPos)
     ChangeStateBlocksTetro(Well, BLOCK_STATE_FILLED, TetroContent, TetroPos);
 }
 
-void MoveTetro(well *Well, i16Vec2 *TetroPos, i8Vec2 MoveVector)
-{
-    i32 Position[1][3] = {
-        {TetroPos->X, TetroPos->Y, 1}
-    };
-    
-    i32 TranstionMatrix[3][3] = {
-        1, 0, 0, 
-        0, 1, 0, 
-        MoveVector.X, MoveVector.Y, 1, 
-    };
-    
-    i32 Result[1][3] = {};
-    
-    MultiplyMatrixes((i32*)Position, (i32*)TranstionMatrix, 3, 1, 3, (i32*)Result);
-    
-    TetroPos->X = (u16)Result[0][0];
-    TetroPos->Y = (u16)Result[0][1];
-}
-
-void RotateTetro(well *Well, i8Vec2 *TetroContent)
-{
-    i32 RotateMatrix[2][2] = {
-        {0, -1},
-        {1, 0}
-    };
-    
-    i32 Result[1][2] = {};
-    
-    for(u32 i = 0; i < MAX_TETRO_SIZE; i++)
-    {
-        i8Vec2 *CurrentPart = &TetroContent[i];
-        
-        i32 Position[1][2] = {
-            {CurrentPart->X, CurrentPart->Y}
-        };
-        
-        MultiplyMatrixes((i32*)Position, (i32*)RotateMatrix, 2, 1, 2, (i32*)Result);
-        
-        CurrentPart->X = (i8)Result[0][0];
-        CurrentPart->Y = (i8)Result[0][1];
-    }
-}
-
 b32 CheckCollideTetro(well *Well, i8Vec2 *TetroContent, i16Vec2 *TetroPos)
 {
     for(u32 i = 0; i < MAX_TETRO_SIZE; i++)
@@ -213,19 +169,79 @@ b32 CheckCollideTetro(well *Well, i8Vec2 *TetroContent, i16Vec2 *TetroPos)
     return false;
 }
 
-void UpdateTetroPos(well *Well, tetro *Tetro)
+void UpdateTetroPos(well *Well, tetro *Tetro, i16Vec2 *BufferPos)
 {
     RemoveTetro(Well, Tetro->Content, Tetro->Pos);
-    AddressSwap((void**)(&Tetro->Pos), (void**)(&Tetro->ShadowPos));
+    *Tetro->Pos = *BufferPos;
     DrawTetro(Well, Tetro->Content, Tetro->Pos);
 }
 
-void UpdateTetroContent(well *Well, tetro *Tetro)
+void UpdateTetroContent(well *Well, tetro *Tetro, i8Vec2 *ContentBuffer)
 {
     RemoveTetro(Well, Tetro->Content, Tetro->Pos);
-    AddressSwap((void**)(&Tetro->Content), (void**)(&Tetro->ShadowContent));
+    memcpy((void*)Tetro->Content, (void*)ContentBuffer, SIZEOF_TETRO_BLOCK * MAX_TETRO_SIZE);
     DrawTetro(Well, Tetro->Content, Tetro->Pos);
 }
+
+void MoveTetro(well *Well, tetro* Tetro, i8Vec2 MoveVector)
+{
+    i16Vec2 BufferPos = *Tetro->Pos;
+    
+    i32 Position[1][3] = {
+        {BufferPos.X, BufferPos.Y, 1}
+    };
+    
+    i32 TranstionMatrix[3][3] = {
+        1, 0, 0, 
+        0, 1, 0, 
+        MoveVector.X, MoveVector.Y, 1, 
+    };
+    
+    i32 Result[1][3] = {};
+    
+    MultiplyMatrixes((i32*)Position, (i32*)TranstionMatrix, 3, 1, 3, (i32*)Result);
+    
+    BufferPos.X = (u16)Result[0][0];
+    BufferPos.Y = (u16)Result[0][1];
+    
+    if(!CheckCollideTetro(Well, Tetro->Content, &BufferPos))
+    {
+        UpdateTetroPos(Well, Tetro, &BufferPos);
+    }
+}
+
+void RotateTetro(well *Well, tetro *Tetro)
+{
+    i8Vec2 TetroContentBuffer[MAX_TETRO_SIZE];
+    memcpy((void*)&TetroContentBuffer, (void*)Tetro->Content, SIZEOF_TETRO_BLOCK * MAX_TETRO_SIZE);
+    
+    i32 RotateMatrix[2][2] = {
+        {0, -1},
+        {1, 0}
+    };
+    
+    i32 Result[1][2] = {};
+    
+    for(u32 i = 0; i < MAX_TETRO_SIZE; i++)
+    {
+        i8Vec2 *CurrentPart = &TetroContentBuffer[i];
+        
+        i32 Position[1][2] = {
+            {CurrentPart->X, CurrentPart->Y}
+        };
+        
+        MultiplyMatrixes((i32*)Position, (i32*)RotateMatrix, 2, 1, 2, (i32*)Result);
+        
+        CurrentPart->X = (i8)Result[0][0];
+        CurrentPart->Y = (i8)Result[0][1];
+    }
+    
+    if(!CheckCollideTetro(Well, (i8Vec2*)(&TetroContentBuffer), Tetro->Pos))
+    {
+        UpdateTetroContent(Well, Tetro, (i8Vec2*)(&TetroContentBuffer));
+    }
+}
+
 
 void UpdateTetro(well *Well, tetro *Tetro, game_time *Time)
 {
@@ -257,8 +273,7 @@ void UpdateTetro(well *Well, tetro *Tetro, game_time *Time)
                 assert(Tetro->Pos->Y >= 0);
                 
                 i8Vec2 MoveVector = {0, -1};
-                *Tetro->ShadowPos = *Tetro->Pos;
-                MoveTetro(Well, Tetro->ShadowPos, MoveVector);
+                MoveTetro(Well, Tetro, MoveVector);
                 
                 if(!CheckCollideTetro(Well, Tetro->Content, Tetro->ShadowPos))
                 {
@@ -374,40 +389,7 @@ GAME_UPDATE_AND_RENDER(UpdateAndRender)
             {
                 if(Tetro->Type != TETRO_O) // NOTE(annad): Absolutely legal crutch.
                 {
-                    i8Vec2 ContentBuffer[MAX_TETRO_SIZE];
-                    memcpy((void*)&ContentBuffer, (void*)Tetro->Content, SIZEOF_TETRO_BLOCK * MAX_TETRO_SIZE);
-                    // RotateTetro(Well, Tetro->ShadowContent);
-                    
-                    i32 RotateMatrix[2][2] = {
-                        {0, -1},
-                        {1, 0}
-                    };
-                    
-                    i32 Result[1][2] = {};
-                    
-                    for(u32 i = 0; i < MAX_TETRO_SIZE; i++)
-                    {
-                        i8Vec2 *CurrentPart = &ContentBuffer[i];
-                        
-                        i32 Position[1][2] = {
-                            {CurrentPart->X, CurrentPart->Y}
-                        };
-                        
-                        MultiplyMatrixes((i32*)Position, (i32*)RotateMatrix, 2, 1, 2, (i32*)Result);
-                        
-                        CurrentPart->X = (i8)Result[0][0];
-                        CurrentPart->Y = (i8)Result[0][1];
-                    }
-                    
-                    if(!CheckCollideTetro(Well, (i8Vec2*)(&ContentBuffer), Tetro->Pos))
-                    {
-                        RemoveTetro(Well, Tetro->Content, Tetro->Pos);
-                        memcpy((void*)Tetro->Content, (void*)&ContentBuffer, SIZEOF_TETRO_BLOCK * MAX_TETRO_SIZE);
-                        // AddressSwap((void**)(&Tetro->Content), (void**)(&Tetro->ShadowContent));
-                        DrawTetro(Well, Tetro->Content, Tetro->Pos);
-                        
-                        // UpdateTetroContent(Well, Tetro);
-                    }
+                    RotateTetro(Well, Tetro);
                 }
             }
             else if(Input->PressedKey == KEY_SPACE)
@@ -432,35 +414,7 @@ GAME_UPDATE_AND_RENDER(UpdateAndRender)
                     MoveVector = {1, 0};
                 }
                 
-                i16Vec2 BufferPos = *Tetro->Pos;
                 
-                i32 Position[1][3] = {
-                    {BufferPos.X, BufferPos.Y, 1}
-                };
-                
-                i32 TranstionMatrix[3][3] = {
-                    1, 0, 0, 
-                    0, 1, 0, 
-                    MoveVector.X, MoveVector.Y, 1, 
-                };
-                
-                i32 Result[1][3] = {};
-                
-                MultiplyMatrixes((i32*)Position, (i32*)TranstionMatrix, 3, 1, 3, (i32*)Result);
-                
-                BufferPos.X = (u16)Result[0][0];
-                BufferPos.Y = (u16)Result[0][1];
-                
-                // MoveTetro(Well, Tetro->ShadowPos, MoveVector);
-                
-                if(!CheckCollideTetro(Well, Tetro->Content, &BufferPos))
-                {
-                    RemoveTetro(Well, Tetro->Content, Tetro->Pos);
-                    // AddressSwap((void**)(&Tetro->Pos), (void**)(&Tetro->ShadowPos));
-                    *Tetro->Pos = BufferPos;
-                    DrawTetro(Well, Tetro->Content, Tetro->Pos);
-                    // UpdateTetroPos(Well, Tetro);
-                }
             }
             
             if(CheckCollideTetro(Well, Tetro->Content, Tetro->Pos))
