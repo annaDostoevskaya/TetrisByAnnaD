@@ -62,6 +62,9 @@ internal void DrawRectangle(game_buffer *Buffer,
 #include "debug.cpp"
 #endif
 
+#include "sdl_game.cpp"
+#include "well.cpp"
+#include "tetro.cpp"
 
 GAME_UPDATE_AND_RENDER(UpdateAndRender)
 {
@@ -195,8 +198,3 @@ GAME_UPDATE_AND_RENDER(UpdateAndRender)
         }
     }
 }
-
-
-#include "sdl_game.cpp"
-#include "well.cpp"
-#include "tetro.cpp"
