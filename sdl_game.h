@@ -53,12 +53,5 @@ struct game_buffer
     void *Memory;
 };
 
-#define GAME_UPDATE_AND_RENDER(name) internal void name(game_buffer *Buffer, \
-game_input *Input, \
-game_memory *Memory, \
-game_time *Time)
-
-GAME_UPDATE_AND_RENDER(UpdateAndRender);
-
 
 #endif //SDL_GAME_H

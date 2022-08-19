@@ -9,55 +9,11 @@ Description: <empty>
 #ifndef GAME_H
 #define GAME_H
 
-//
-//
-//
-
+#include "math.h"
+#include "base_types.h"
+#include "sdl_game.h"
 #include "well.h"
-
-enum tetro_state
-{
-    TETRO_STATE_SPAWN = 0,
-    TETRO_STATE_IN_PROGRESS,
-    TETRO_STATE_FALL,
-    
-    TETRO_STATE_TOTAL
-};
-
-#define SIZEOF_TETRO_BLOCK sizeof(i8Vec2)
-#define MAX_TETRO_SIZE 4
-
-enum tetro_type
-{
-    TETRO_O,
-    TETRO_T,
-    TETRO_L,
-    TETRO_J,
-    TETRO_Z,
-    TETRO_S,
-    TETRO_I,
-    
-    TETRO_TOTAL,
-};
-
-struct tetro
-{
-    i8Vec2 Tetrominos[TETRO_TOTAL][MAX_TETRO_SIZE];
-    
-    tetro_state State;
-    tetro_type Type;
-    
-    i16Vec2 *Pos;
-    i16Vec2 *ShadowPos;
-    i16Vec2 PosBuffers[2];
-    
-    i8Vec2 *Content;
-    i8Vec2 *ShadowContent;
-    i8Vec2 ContentBuffers[2][MAX_TETRO_SIZE];
-    
-    u32 DownTime;
-    u32 AccumTime;
-};
+#include "tetro.h"
 
 struct game_state
 {
@@ -74,5 +30,12 @@ struct game_state
     
     b32 Pause;
 };
+
+#define GAME_UPDATE_AND_RENDER(name) internal void name(game_buffer *Buffer, \
+game_input *Input, \
+game_memory *Memory, \
+game_time *Time)
+
+GAME_UPDATE_AND_RENDER(UpdateAndRender);
 
 #endif //GAME_H

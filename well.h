@@ -9,8 +9,6 @@ Description: <empty>
 #ifndef WELL_H
 #define WELL_H
 
-#include "math.h"
-
 #define WELL_WIDTH 9
 #define WELL_HEIGHT 16
 
@@ -39,5 +37,10 @@ struct well
     
     block_state Field[WELL_WIDTH * WELL_HEIGHT];
 };
+
+internal void RenderWell(game_buffer *Buffer, well *Well);
+inline void SetWellBlockState(well *Well, block_state State, i16Vec2 *Pos);
+inline b32 WellBlockIs(well *Well, block_state State, i16Vec2 *Pos);
+inline b32 WellBlockIsFilled(well *Well, i16Vec2 *Pos);
 
 #endif //WELL_H
