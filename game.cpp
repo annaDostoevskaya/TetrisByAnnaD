@@ -144,16 +144,12 @@ GAME_UPDATE_AND_RENDER(UpdateAndRender)
             {
                 if(Tetro->Type != TETRO_O) // NOTE(annad): Absolutely legal crutch.
                 {
-                    <<<<<<< HEAD
-                        RotateTetro(Well, Tetro);
-                    =======
-                        memcpy((void*)Tetro->ShadowContent, (void*)Tetro->Content, SIZEOF_TETRO_BLOCK * MAX_TETRO_SIZE);
+                    memcpy((void*)Tetro->ShadowContent, (void*)Tetro->Content, SIZEOF_TETRO_BLOCK * MAX_TETRO_SIZE);
                     RotateTetro(Well, Tetro->ShadowContent);
                     if(!CheckCollideTetro(Well, Tetro->ShadowContent, Tetro->Pos))
                     {
                         UpdateTetroContent(Well, Tetro);
                     }
-                    >>>>>>> dev
                 }
             }
             else if(Input->PressedKey == KEY_SPACE)
