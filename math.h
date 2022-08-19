@@ -9,6 +9,8 @@ Description: <empty>
 #ifndef MATH_H
 #define MATH_H
 
+#include "base_types.h"
+
 struct i8Vec2
 {
     i8 X;

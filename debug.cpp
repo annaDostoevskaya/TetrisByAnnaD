@@ -6,8 +6,8 @@ Date: August 7th 2022 5:29 pm
 Description: <empty>
 */
 
-#include "game.h"
-#include "sdl_game.h"
+#include <windows.h>
+#include <stdio.h>
 
 internal void DEBUG_GetStructInfo(game_state *Data)
 {

@@ -43,27 +43,27 @@ internal void RenderWell(game_buffer *Buffer, well *Well)
     }
 }
 
-inline void SetWellBlockState(well *Well, block_state State, i16 PosX, i16 PosY)
+inline void SetWellBlockState(well *Well, block_state State, i16Vec2 *Pos)
 {
-    assert(PosX < Well->Width);
-    assert(PosY < Well->Height);
-    assert(PosX >= 0 && PosY >= 0);
+    assert(Pos->X < Well->Width);
+    assert(Pos->Y < Well->Height);
+    assert(Pos->X >= 0 && Pos->Y >= 0);
     
-    PosY = Well->Height - PosY - 1;
-    Well->Field[PosY * Well->Width + PosX] = State;
+    Pos->Y = Well->Height - Pos->Y - 1;
+    Well->Field[Pos->Y * Well->Width + Pos->X] = State;
 }
 
-inline b32 WellBlockIs(well *Well, block_state State, i16 PosX, i16 PosY)
+inline b32 WellBlockIs(well *Well, block_state State, i16Vec2 *Pos)
 {
-    assert(PosX < Well->Width);
-    assert(PosY < Well->Height);
-    assert(PosX >= 0 && PosY >= 0);
+    assert(Pos->X < Well->Width);
+    assert(Pos->Y < Well->Height);
+    assert(Pos->X >= 0 && Pos->Y >= 0);
     
-    PosY = Well->Height - PosY - 1;
-    return Well->Field[PosY * Well->Width + PosX] == State;
+    Pos->Y = Well->Height - Pos->Y - 1;
+    return Well->Field[Pos->Y * Well->Width + Pos->X] == State;
 }
 
-inline b32 WellBlockIsFilled(well *Well, i16 PosX, i16 PosY)
+inline b32 WellBlockIsFilled(well *Well, i16Vec2 *Pos)
 {
-    return WellBlockIs(Well, BLOCK_STATE_FILLED, PosX, PosY);
+    return WellBlockIs(Well, BLOCK_STATE_FILLED, Pos);
 }
