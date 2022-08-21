@@ -14,17 +14,45 @@ Description: <empty>
 #include "sdl_game.h"
 
 #include <SDL2/SDL.h>
-#include <stdio.h>
+#include <SDL2/SDL_audio.h>
 
 #define SCREEN_WIDTH 1920/2
 #define SCREEN_HEIGHT 1080/2
 
+#define NUM_SOUNDS 1
+
+#include <math.h>
+
+#define PI 3.1415926535
+
+const u32 SOUND_BUFFER_SIZE = 512;
+
+void MixAudio(void *Udata, Uint8 *stream, int len)
+{
+    // Its really work?.. idk...
+    i16 SoundData[SOUND_BUFFER_SIZE] = {};
+    
+    for(u32 i = 0; i < SOUND_BUFFER_SIZE; i++)
+    {
+        if(i % 2)
+        {
+            SoundData[i] = (i16)32767;
+        }
+        else
+        {
+            SoundData[i] = (i16)(-32768);
+        }
+    }
+    
+    SDL_MixAudio(stream, (Uint8*)SoundData, SOUND_BUFFER_SIZE, SDL_MIX_MAXVOLUME);
+}
+
 int main(int Argc, char **Argv)
 {
     // NOTE(annad): Init platform layer section.
-    if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) < 0)
+    if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_AUDIO) < 0)
     {
-        printf("Failed initialize SDL. SDL_Error: %s\n", SDL_GetError());
+        OutputDebugString("Failed initialize SDL!");
         return -1;
     }
     
@@ -39,16 +67,41 @@ int main(int Argc, char **Argv)
                               SDL_WINDOW_SHOWN);
     if(Window == NULL)
     {
-        printf("Window could not be created! SDL_Error: %s\n", SDL_GetError());
+        OutputDebugString("Window could not be created!");
         return -1;
     }
     
     Buffer = SDL_GetWindowSurface(Window);
     if(Buffer == NULL)
     {
-        printf("Surface could not be created! SDL_Error: %s\n", SDL_GetError());
+        OutputDebugString("Surface could not be created!");
         return -1;
     }
+    
+    //
+    // sdl_audio
+    //
+    
+    SDL_AudioSpec AudioFormat;
+    
+    AudioFormat.freq = 48000; // freq is samples per seconds.
+    AudioFormat.format = AUDIO_S16; // sample is 16 bit, dependency format.
+    AudioFormat.channels = 1; // 16 bit per channel.
+    AudioFormat.samples = SOUND_BUFFER_SIZE; 
+    AudioFormat.callback = MixAudio;
+    AudioFormat.userdata = NULL;
+    
+    if(SDL_OpenAudio(&AudioFormat, NULL) < 0)
+    {
+        OutputDebugString("Unable to open audio");
+        return -1;
+    }
+    
+    SDL_PauseAudio(0);
+    
+    //
+    // sdl_audio
+    //
     
     // NOTE(annad): Buffer for rendering to window.
     game_buffer GameBuffer = {};
@@ -59,7 +112,6 @@ int main(int Argc, char **Argv)
     
     // NOTE(annad): Keys states.
     game_input GameInput = {};
-    
     // NOTE(annad): Event for quit.
     SDL_Event Event = {};
     b32 Run = true;
@@ -177,6 +229,7 @@ int main(int Argc, char **Argv)
         GameTime.BeginTime = GameTime.EndTime;
     }
     
+    SDL_CloseAudio();
     SDL_FreeSurface(Buffer);
     SDL_DestroyWindow(Window);
     SDL_Quit();
