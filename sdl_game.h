@@ -42,6 +42,7 @@ enum Keys
 
 struct game_input 
 {
+    b32 Changed;
     Keys PressedKey;
 };
 

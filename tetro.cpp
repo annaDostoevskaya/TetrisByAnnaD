@@ -12,16 +12,20 @@ Description: <empty>
 // matrix.cpp
 //
 
-void MultiplyMatrixes(i32 *M1, i32 *M2, u32 RowsAndColumnM1AndM2, u32 ColumnsM1, u32 RowsM2, i32 *Dest)
+void MultiplyMatrices(i32 *M1, i32 *M2, 
+                      u32 RowsAndColumnSizeForM1AndM2,  // NOTE(annad): Rows size is Colum and Column size is Rows?... idk...
+                      u32 ColumnsSizeM1, u32 RowsSizeM2, i32 *Dest)
 {
-    for(u32 i = 0; i < ColumnsM1; i++)
+    // TODO(annad): We must rewrite it.
+    for(u32 i = 0; i < ColumnsSizeM1; i++)
     {
-        for(u32 j = 0; j < RowsM2; j++)
+        for(u32 j = 0; j < RowsSizeM2; j++)
         {
-            Dest[i * RowsM2 + j] = 0;
-            for(u32 k = 0; k < RowsAndColumnM1AndM2; k++)
+            Dest[i * RowsSizeM2 + j] = 0;
+            for(u32 k = 0; k < RowsAndColumnSizeForM1AndM2; k++)
             {
-                Dest[i * RowsM2 + j] += (M1[i * RowsAndColumnM1AndM2 + k] * M2[k * RowsAndColumnM1AndM2 + j]);
+                Dest[i * RowsSizeM2 + j] += (M1[i * RowsAndColumnSizeForM1AndM2 + k] * 
+                                             M2[k * RowsAndColumnSizeForM1AndM2 + j]);
             }
         }
     }
@@ -54,7 +58,7 @@ u32 GetRandomNumber(u32 Min, u32 Max)
 {
     localv u32 Index = 0;
     localv u32 RADNMON_NUMBERS[100] = {
-        3, 1, 6, 5, 4, 3, 
+        3, 1, 6, 4, 4, 3, 
         3, 4, 1, 4, 5, 5, 
         0, 2, 0, 0, 3, 5, 
         5, 1, 6, 6, 3, 5, 
@@ -94,7 +98,7 @@ void ChangeStateBlocksTetro(well *Well, block_state BlockState, i8Vec2 *TetroCon
         i16Vec2 GlobalPos = {};
         GlobalPos.X = TetroPos->X + CurrentPart->X;
         GlobalPos.Y = TetroPos->Y - CurrentPart->Y;
-        SetWellBlockState(Well, BlockState, &GlobalPos);
+        SetWellBlockState(Well, BlockState, GlobalPos);
     }
 }
 
@@ -120,14 +124,14 @@ void MoveTetro(well *Well, i16Vec2 *TetroPos, i8Vec2 MoveVector)
     };
     
     i32 TranstionMatrix[3][3] = {
-        1, 0, 0, 
-        0, 1, 0, 
-        MoveVector.X, MoveVector.Y, 1, 
+        {1, 0, 0},
+        {0, 1, 0},
+        {MoveVector.X, MoveVector.Y, 1}
     };
     
     i32 Result[1][3] = {};
     
-    MultiplyMatrixes((i32*)Position, (i32*)TranstionMatrix, 3, 1, 3, (i32*)Result);
+    MultiplyMatrices((i32*)Position, (i32*)TranstionMatrix, 3, 1, 3, (i32*)Result);
     
     TetroPos->X = (u16)Result[0][0];
     TetroPos->Y = (u16)Result[0][1];
@@ -150,7 +154,7 @@ void RotateTetro(well *Well, i8Vec2 *TetroContent)
             {CurrentPart->X, CurrentPart->Y}
         };
         
-        MultiplyMatrixes((i32*)Position, (i32*)RotateMatrix, 2, 1, 2, (i32*)Result);
+        MultiplyMatrices((i32*)Position, (i32*)RotateMatrix, 2, 1, 2, (i32*)Result);
         
         CurrentPart->X = (i8)Result[0][0];
         CurrentPart->Y = (i8)Result[0][1];
@@ -167,7 +171,7 @@ b32 CheckCollideTetro(well *Well, i8Vec2 *TetroContent, i16Vec2 *TetroPos)
         GlobalPos.Y = TetroPos->Y - CurrentPart->Y;
         if(GlobalPos.Y < 0 || GlobalPos.X < 0 || 
            GlobalPos.X >= Well->Width || GlobalPos.Y >= Well->Height || 
-           WellBlockIsFilled(Well, &GlobalPos))
+           WellBlockIsFilled(Well, GlobalPos))
         {
             return true;
         }
@@ -192,63 +196,71 @@ void UpdateTetroContent(well *Well, tetro *Tetro)
 
 void UpdateTetro(well *Well, tetro *Tetro, game_time *Time)
 {
-    if(Tetro->AccumTime >= Tetro->DownTime)
+    // NOTE(saiel): Move this to top.
+    if(Tetro->AccumTime < Tetro->DownTime)
     {
-        switch(Tetro->State)
-        {
-            // TODO(annad): This should be done better.
-            case TETRO_STATE_SPAWN:
-            {
-                Tetro->Pos->X = Tetro->ShadowPos->X = Well->Width / 2;
-                Tetro->Pos->Y = Tetro->ShadowPos->Y = Well->Height - 1;
-                
-                // TODO(annad): Radmon.
-                Tetro->Type = (tetro_type)GetRandomNumber(0, (u32)TETRO_TOTAL);
-                
-                memcpy((void*)(&Tetro->ContentBuffers[0]), (void*)(&Tetro->Tetrominos[Tetro->Type]), sizeof(i8Vec2) * MAX_TETRO_SIZE);
-                memcpy((void*)(&Tetro->ContentBuffers[1]), (void*)(&Tetro->ContentBuffers[0]), sizeof(i8Vec2) * MAX_TETRO_SIZE);
-                
-                DrawTetro(Well, Tetro->Content, Tetro->Pos);
-                
-                Tetro->State = TETRO_STATE_IN_PROGRESS;
-                break;
-            }
-            
-            case TETRO_STATE_IN_PROGRESS:
-            {
-                assert(Tetro->Pos->Y >= 0);
-                
-                i8Vec2 MoveVector = {0, -1};
-                *Tetro->ShadowPos = *Tetro->Pos;
-                MoveTetro(Well, Tetro->ShadowPos, MoveVector);
-                
-                if(!CheckCollideTetro(Well, Tetro->Content, Tetro->ShadowPos))
-                {
-                    UpdateTetroPos(Well, Tetro);
-                    break;
-                }
-                
-                Tetro->State = TETRO_STATE_FALL;
-                break;
-            }
-            
-            case TETRO_STATE_FALL:
-            {
-                DropTetro(Well, Tetro->Content, Tetro->Pos);
-                Tetro->State = TETRO_STATE_SPAWN;
-                break;
-            }
-            
-#ifdef _GAME_INTERNAL
-            default:
-            {
-                assert(1 != 1);
-                break;
-            }
-#endif
-        }
-        Tetro->AccumTime = 0;
+        Tetro->AccumTime += Time->dt;
+        return;
     }
     
-    Tetro->AccumTime += Time->dt;
+    Tetro->AccumTime = 0;
+    
+    switch(Tetro->State)
+    {
+        // TODO(annad): This should be done better.
+        case TETRO_STATE_SPAWN:
+        {
+            Tetro->Pos->X = Tetro->ShadowPos->X = Well->Width / 2;
+            Tetro->Pos->Y = Tetro->ShadowPos->Y = Well->Height - 1;
+            
+            // TODO(annad): Radmon.
+            // Tetro->Type = (tetro_type)GetRandomNumber(0, (u32)TETRO_TOTAL);
+            Tetro->Type = (tetro_type)6;
+            
+            // TODO(saiel): We must do more strong typizatino for this and remove pointers, then remove memcpy()
+            // NOTE(saiel): memcpy() fast then copy a memory, because use SIMD. It's partly hardware thing.
+            memcpy((void*)(&Tetro->ContentBuffers[0]), (void*)(&Tetro->Tetrominos[Tetro->Type]), sizeof(i8Vec2) * MAX_TETRO_SIZE);
+            memcpy((void*)(&Tetro->ContentBuffers[1]), (void*)(&Tetro->ContentBuffers[0]), sizeof(i8Vec2) * MAX_TETRO_SIZE);
+            
+            DrawTetro(Well, Tetro->Content, Tetro->Pos);
+            
+            Tetro->State = TETRO_STATE_IN_PROGRESS;
+            break;
+        }
+        
+        case TETRO_STATE_IN_PROGRESS:
+        {
+            assert(Tetro->Pos->Y >= 0);
+            
+            i8Vec2 MoveVector = {0, -1};
+            *Tetro->ShadowPos = *Tetro->Pos;
+            MoveTetro(Well, Tetro->ShadowPos, MoveVector);
+            
+            if(!CheckCollideTetro(Well, Tetro->Content, Tetro->ShadowPos))
+            {
+                UpdateTetroPos(Well, Tetro);
+                break;
+            }
+            
+            Tetro->State = TETRO_STATE_FALL;
+            // NOTE(saiel): We can remove this, сause we're falling apart
+            // break
+        }
+        
+        case TETRO_STATE_FALL:
+        {
+            DropTetro(Well, Tetro->Content, Tetro->Pos);
+            Tetro->State = TETRO_STATE_SPAWN;
+            break;
+        }
+        
+#ifdef _GAME_INTERNAL
+        default:
+        {
+            assert(1 != 1);
+            break;
+        }
+#endif
+    }
 }
+

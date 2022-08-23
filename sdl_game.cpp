@@ -10,6 +10,10 @@ Description: <empty>
 
 #include <windows.h>
 
+#ifdef _GAME_INTERNAL
+#include <stdio.h>
+#endif
+
 #include "base_types.h"
 #include "sdl_game.h"
 
@@ -19,33 +23,17 @@ Description: <empty>
 #define SCREEN_WIDTH 1920/2
 #define SCREEN_HEIGHT 1080/2
 
+/* 
+// TODO(annad): Audio, but later...
 #define NUM_SOUNDS 1
-
-#include <math.h>
-
-#define PI 3.1415926535
 
 const u32 SOUND_BUFFER_SIZE = 512;
 
 void MixAudio(void *Udata, Uint8 *stream, int len)
 {
-    // Its really work?.. idk...
-    i16 SoundData[SOUND_BUFFER_SIZE] = {};
     
-    for(u32 i = 0; i < SOUND_BUFFER_SIZE; i++)
-    {
-        if(i % 2)
-        {
-            SoundData[i] = (i16)32767;
-        }
-        else
-        {
-            SoundData[i] = (i16)(-32768);
-        }
-    }
-    
-    SDL_MixAudio(stream, (Uint8*)SoundData, SOUND_BUFFER_SIZE, SDL_MIX_MAXVOLUME);
 }
+ */
 
 int main(int Argc, char **Argv)
 {
@@ -78,31 +66,6 @@ int main(int Argc, char **Argv)
         return -1;
     }
     
-    //
-    // sdl_audio
-    //
-    
-    SDL_AudioSpec AudioFormat;
-    
-    AudioFormat.freq = 48000; // freq is samples per seconds.
-    AudioFormat.format = AUDIO_S16; // sample is 16 bit, dependency format.
-    AudioFormat.channels = 1; // 16 bit per channel.
-    AudioFormat.samples = SOUND_BUFFER_SIZE; 
-    AudioFormat.callback = MixAudio;
-    AudioFormat.userdata = NULL;
-    
-    if(SDL_OpenAudio(&AudioFormat, NULL) < 0)
-    {
-        OutputDebugString("Unable to open audio");
-        return -1;
-    }
-    
-    SDL_PauseAudio(0);
-    
-    //
-    // sdl_audio
-    //
-    
     // NOTE(annad): Buffer for rendering to window.
     game_buffer GameBuffer = {};
     GameBuffer.Width = Buffer->w;
@@ -128,6 +91,34 @@ int main(int Argc, char **Argv)
     GameTime.BeginTime = SDL_GetTicks();
     GameTime.EndTime = GameTime.BeginTime;
     GameTime.dt = GameTime.EndTime - GameTime.BeginTime;
+    
+    //
+    // sdl_audio
+    //
+    
+    /*     
+    // TODO(annad): Audio, but later...
+        SDL_AudioSpec AudioFormat;
+        
+        AudioFormat.freq = 48000; // freq is samples per seconds.
+        AudioFormat.format = AUDIO_S16; // sample is 16 bit, dependency format.
+        AudioFormat.channels = 1; // 16 bit per channel.
+        AudioFormat.samples = SOUND_BUFFER_SIZE; 
+        AudioFormat.callback = MixAudio;
+        AudioFormat.userdata = (void*)(&AudioFormat);
+        
+        if(SDL_OpenAudio(&AudioFormat, NULL) < 0)
+        {
+            OutputDebugString("Unable to open audio");
+            return -1;
+        }
+        
+        SDL_PauseAudio(0);
+         */
+    
+    //
+    // sdl_audio
+    //
     
     while(Run)
     {

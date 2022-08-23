@@ -74,7 +74,7 @@ GAME_UPDATE_AND_RENDER(UpdateAndRender)
     // NOTE(saiel): Objectively, this UB.
     game_state *State = (game_state *)Memory->PermanentStorage;
     well *Well = &State->Well;
-    tetro* Tetro = &State->Tetro;
+    tetro *Tetro = &State->Tetro;
     
     if(State->Initialized != (b32)true)
     {
@@ -107,8 +107,9 @@ GAME_UPDATE_AND_RENDER(UpdateAndRender)
             {{-1, 1}, {0, 1}, {0, 0}, {1, 0}}, // S
             {{-1, 0}, {0, 0}, {1, 0}, {2, 0}} // I
         };
-        
-        memcpy((void*)(&Tetro->Tetrominos), (void*)(&DefaultTetrominos), SIZEOF_TETRO_BLOCK * MAX_TETRO_SIZE * TETRO_TOTAL);
+        static_assert(sizeof(DefaultTetrominos) == (SIZEOF_TETRO_BLOCK * MAX_TETRO_SIZE * TETRO_TOTAL));
+        static_assert(sizeof(Tetro->Tetrominos) == sizeof(DefaultTetrominos));
+        memcpy((void*)(&Tetro->Tetrominos), (void*)(&DefaultTetrominos), sizeof(DefaultTetrominos));
         
         Tetro->Content = (i8Vec2*)(&Tetro->ContentBuffers[0]);
         Tetro->ShadowContent = (i8Vec2*)(&Tetro->ContentBuffers[1]);
@@ -125,66 +126,104 @@ GAME_UPDATE_AND_RENDER(UpdateAndRender)
     
     // DEBUG_CheckWell(Well, Time);
     
+    
     if(State->Pause == (b32)false)
     {
         UpdateTetro(Well, Tetro, Time);
     }
     
+    {
+        // TODO(annad): 
+        // If it is relevant, you need to put this data in bit fields and use 
+        // two bytes for everything. Only then will the size of the well 
+        // possibly become static.
+        
+        i16Vec2 BurnCursor = {0, 0};
+        block_state *Field = (block_state*)(&Well->Field);
+        
+        for(BurnCursor.Y = 0; BurnCursor.Y < Well->Height; BurnCursor.Y++)
+        {
+            for(BurnCursor.X = 0; BurnCursor.X < Well->Width; BurnCursor.X++)
+            {
+                if(Field[BurnCursor.Y * Well->Width + BurnCursor.X] != BLOCK_STATE_FILLED)
+                    break;
+            }
+            
+            if(BurnCursor.X == Well->Width)
+            {
+                for(i16 Y = BurnCursor.Y; Y > 0; Y--)
+                {
+                    for(i16 X = 0; X < Well->Width; X++)
+                    {
+                        Field[Y * Well->Width + X] = Field[(Y - 1) * Well->Width + X];
+                    }
+                }
+            }
+        }
+    }
+    
     RenderWell(Buffer, Well);
     
+#ifdef _GAME_INTERNAL
     // DrawRectangle(Buffer, State->PosX, State->PosY, State->PlayerSize, State->PlayerSize, META_PIXEL_COLOR, META_PIXEL_COLOR, META_PIXEL_COLOR);
-    
     DEBUG_CheckAllPositions(Buffer, Time, Well->CellSideSize);
     DEBUG_DrawGrid(Buffer, Well->CellSideSize);
     // DrawRectangle(Buffer, 0, Buffer->Height, 50, 50, META_PIXEL_COLOR, META_PIXEL_COLOR, META_PIXEL_COLOR);
     // DEBUG_DrawELT(Buffer);
+#endif
     
     {
         if(!CheckCollideTetro(Well, Tetro->Content, Tetro->Pos))
         {
-            // NOTE(annad): Input handling.
-            if(Input->PressedKey == KEY_UP)
+            if(Input->PressedKey != KEY_NOTHING)
             {
-                if(Tetro->Type != TETRO_O) // NOTE(annad): Absolutely legal crutch.
+                // NOTE(annad): Input handling.
+                if(Input->PressedKey == KEY_UP)
                 {
-                    memcpy((void*)Tetro->ShadowContent, (void*)Tetro->Content, SIZEOF_TETRO_BLOCK * MAX_TETRO_SIZE);
-                    RotateTetro(Well, Tetro->ShadowContent);
-                    if(!CheckCollideTetro(Well, Tetro->ShadowContent, Tetro->Pos))
+                    if(Tetro->Type != TETRO_O) // NOTE(annad): Absolutely legal crutch.
                     {
-                        UpdateTetroContent(Well, Tetro);
+                        // TODO(annad): Check this static assert...?..
+                        static_assert(sizeof(Tetro->ShadowContent) == sizeof(Tetro->Content));
+                        static_assert(sizeof(Tetro->ShadowContent) == SIZEOF_TETRO_BLOCK * MAX_TETRO_SIZE);
+                        memcpy((void*)Tetro->ShadowContent, (void*)Tetro->Content, SIZEOF_TETRO_BLOCK * MAX_TETRO_SIZE);
+                        RotateTetro(Well, Tetro->ShadowContent);
+                        if(!CheckCollideTetro(Well, Tetro->ShadowContent, Tetro->Pos))
+                        {
+                            UpdateTetroContent(Well, Tetro);
+                        }
+                    }
+                }
+                else if(Input->PressedKey == KEY_SPACE)
+                {
+                    // TODO(saiel): All except KEY_SPACE must be handle in pause check.
+                    State->Pause = !State->Pause;
+                }
+                else
+                {
+                    i8Vec2 MoveVector = {0, 0};
+                    
+                    if(Input->PressedKey == KEY_DOWN)
+                    {
+                        MoveVector = {0, -1};
+                    }
+                    else if(Input->PressedKey == KEY_LEFT)
+                    {
+                        MoveVector = {-1, 0};
+                    }
+                    else if(Input->PressedKey == KEY_RIGHT)
+                    {
+                        MoveVector = {1, 0};
+                    }
+                    
+                    *Tetro->ShadowPos = *Tetro->Pos;
+                    MoveTetro(Well, Tetro->ShadowPos, MoveVector);
+                    if(!CheckCollideTetro(Well, Tetro->Content, Tetro->ShadowPos))
+                    {
+                        UpdateTetroPos(Well, Tetro);
                     }
                 }
             }
-            else if(Input->PressedKey == KEY_SPACE)
-            {
-                State->Pause = !State->Pause;
-                __debugbreak();
-            }
-            else
-            {
-                i8Vec2 MoveVector = {0, 0};
-                
-                if(Input->PressedKey == KEY_DOWN)
-                {
-                    MoveVector = {0, -1};
-                }
-                else if(Input->PressedKey == KEY_LEFT)
-                {
-                    MoveVector = {-1, 0};
-                }
-                else if(Input->PressedKey == KEY_RIGHT)
-                {
-                    MoveVector = {1, 0};
-                }
-                
-                *Tetro->ShadowPos = *Tetro->Pos;
-                MoveTetro(Well, Tetro->ShadowPos, MoveVector);
-                if(!CheckCollideTetro(Well, Tetro->Content, Tetro->ShadowPos))
-                {
-                    UpdateTetroPos(Well, Tetro);
-                }
-            }
-            
+#ifdef _GAME_INTERNAL
             if(CheckCollideTetro(Well, Tetro->Content, Tetro->Pos))
             {
                 State->BoolState = 1;
@@ -195,6 +234,7 @@ GAME_UPDATE_AND_RENDER(UpdateAndRender)
             }
             
             DEBUG_BoolInScreen(Buffer, State->BoolState);
+#endif
         }
     }
 }

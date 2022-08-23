@@ -21,6 +21,8 @@ enum block_state
 
 struct well
 {
+    block_state Field[WELL_WIDTH * WELL_HEIGHT];
+    
     u32Vec2 Pos;
     
     // NOTE(annad): The position at which the inner square of the field begins.
@@ -34,13 +36,11 @@ struct well
     u16 FullHeight;
     
     u32 CellSideSize;
-    
-    block_state Field[WELL_WIDTH * WELL_HEIGHT];
 };
 
 internal void RenderWell(game_buffer *Buffer, well *Well);
-inline void SetWellBlockState(well *Well, block_state State, i16Vec2 *Pos);
-inline b32 WellBlockIs(well *Well, block_state State, i16Vec2 *Pos);
-inline b32 WellBlockIsFilled(well *Well, i16Vec2 *Pos);
+inline void SetWellBlockState(well *Well, block_state State, i16Vec2 Pos);
+inline b32 WellBlockIs(well *Well, block_state State, i16Vec2 Pos);
+inline b32 WellBlockIsFilled(well *Well, i16Vec2 Pos);
 
 #endif //WELL_H

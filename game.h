@@ -22,13 +22,12 @@ struct game_state
     bool stub;
     b32 BoolState;
 #endif
-    b32 Initialized;
+    b16 Initialized;
+    b16 Pause;
     
     u32 MetaPixelSize;
     well Well;
     tetro Tetro;
-    
-    b32 Pause;
 };
 
 #define GAME_UPDATE_AND_RENDER(name) internal void name(game_buffer *Buffer, \

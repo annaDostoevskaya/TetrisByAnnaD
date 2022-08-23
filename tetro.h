@@ -24,7 +24,8 @@ enum tetro_state
 
 enum tetro_type
 {
-    TETRO_O,
+    // NOTE(saiel): Use enum classes.
+    TETRO_O = 0,
     TETRO_T,
     TETRO_L,
     TETRO_J,
@@ -33,6 +34,7 @@ enum tetro_type
     TETRO_I,
     
     TETRO_TOTAL,
+    // NOTE(saiel): TETRO_UNDEFINED or TETRO_INVALID for invalid states, for example.
 };
 
 struct tetro
@@ -42,10 +44,12 @@ struct tetro
     tetro_state State;
     tetro_type Type;
     
+    // TODO(saiel): This can be two arrays, without pointers.
     i16Vec2 *Pos;
     i16Vec2 *ShadowPos;
     i16Vec2 PosBuffers[2];
     
+    // TODO(saiel): This can be two arrays, without pointers.
     i8Vec2 *Content;
     i8Vec2 *ShadowContent;
     i8Vec2 ContentBuffers[2][MAX_TETRO_SIZE];

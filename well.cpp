@@ -43,27 +43,28 @@ internal void RenderWell(game_buffer *Buffer, well *Well)
     }
 }
 
-inline void SetWellBlockState(well *Well, block_state State, i16Vec2 *Pos)
+// TODO(annad): Mb pass Pos by pointer?..
+inline void SetWellBlockState(well *Well, block_state State, i16Vec2 Pos)
 {
-    assert(Pos->X < Well->Width);
-    assert(Pos->Y < Well->Height);
-    assert(Pos->X >= 0 && Pos->Y >= 0);
+    assert(Pos.X < Well->Width);
+    assert(Pos.Y < Well->Height);
+    assert(Pos.X >= 0 && Pos.Y >= 0);
     
-    Pos->Y = Well->Height - Pos->Y - 1;
-    Well->Field[Pos->Y * Well->Width + Pos->X] = State;
+    Pos.Y = Well->Height - Pos.Y - 1;
+    Well->Field[Pos.Y * Well->Width + Pos.X] = State;
 }
 
-inline b32 WellBlockIs(well *Well, block_state State, i16Vec2 *Pos)
+inline b32 WellBlockIs(well *Well, block_state State, i16Vec2 Pos)
 {
-    assert(Pos->X < Well->Width);
-    assert(Pos->Y < Well->Height);
-    assert(Pos->X >= 0 && Pos->Y >= 0);
+    assert(Pos.X < Well->Width);
+    assert(Pos.Y < Well->Height);
+    assert(Pos.X >= 0 && Pos.Y >= 0);
     
-    Pos->Y = Well->Height - Pos->Y - 1;
-    return Well->Field[Pos->Y * Well->Width + Pos->X] == State;
+    Pos.Y = Well->Height - Pos.Y - 1;
+    return Well->Field[Pos.Y * Well->Width + Pos.X] == State;
 }
 
-inline b32 WellBlockIsFilled(well *Well, i16Vec2 *Pos)
+inline b32 WellBlockIsFilled(well *Well, i16Vec2 Pos)
 {
     return WellBlockIs(Well, BLOCK_STATE_FILLED, Pos);
 }
