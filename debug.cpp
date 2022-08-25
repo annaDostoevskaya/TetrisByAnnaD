@@ -76,20 +76,24 @@ internal void DEBUG_DrawELT(game_buffer *Buffer)
 
 internal void DEBUG_DrawGrid(game_buffer *Buffer, u32 GridCellSize)
 {
-    localv u32 shift = 74; // NOTE(annad): magic value calculated empirically so that the grid is level
+    
+    localv u32 ShiftX = 130; // NOTE(annad): magic value calculated empirically so that the grid is level
+    localv u32 ShiftY = 133;
+    
     u32 *Pixels = (u32 *)Buffer->Memory;
-    for(u32 Y = 0; Y < Buffer->Height; Y++)
+    for(u32 Y = ShiftY; Y < Buffer->Height + ShiftY; Y++)
     {
-        for(u32 X = shift; X < Buffer->Width + shift; X++)
+        for(u32 X = ShiftX; X < Buffer->Width + ShiftX; X++)
         {
             if(X % GridCellSize == 0 || Y % GridCellSize == 0)
             {
-                Pixels[Y * Buffer->Width + X - shift] = 0xFF111111;
+                Pixels[(Y - ShiftY) * Buffer->Width + (X - ShiftX)] = 0xFF111111;
             }
         }
     }
     
-    // shift++;
+    // ShiftX++;
+    // ShiftY++;
 }
 
 

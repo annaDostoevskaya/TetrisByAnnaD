@@ -19,6 +19,7 @@ internal void DrawRectangle(game_buffer *Buffer,
                             i32 PosX, i32 PosY, u32 W, u32 H,
                             r32 Red, r32 Green, r32 Blue)
 {
+    // TODO(annad): Add cliping...
     // NOTE(annad): Reverse buffer.
     if (PosY > Buffer->Height)
     {
@@ -66,6 +67,211 @@ internal void DrawRectangle(game_buffer *Buffer,
 #include "well.cpp"
 #include "tetro.cpp"
 
+//
+// math.cpp
+//
+
+internal u64 Power(u64 Number, u32 Degree)
+{
+    if(Degree == 0)
+    {
+        Number = 1;
+    }
+    
+    u64 Temp = Number;
+    while(Degree > 0)
+    {
+        Temp *= Number;
+        Degree--;
+    }
+    
+    return Temp;
+}
+
+//
+// math.cpp
+//
+
+internal void IToStr(u8 *StrBuf, u32 StrLength, u64 Integer)
+{
+    u32 Temp = 0;
+    for(i32 i = 0; i < StrLength; i++)
+    {
+        if(i != 0)
+        {
+            u64 Divider = Power(10, i);
+            u64 PrevDivider = (Power(10, i) / 10);
+            
+            if(Integer % PrevDivider == Integer)
+            {
+                Temp = 0;
+            }
+            else
+            {
+                Temp = (((Integer % Divider) - (Integer % PrevDivider)) % 9);
+                
+                if(((Integer % Divider) - (Integer % PrevDivider)) == 0)
+                {
+                    Temp = 0;
+                }
+                else
+                {
+                    if(Temp == 0)
+                    {
+                        Temp = 9;
+                    }
+                }
+            }
+        }
+        else 
+        {
+            Temp = (Integer % 10);
+        }
+        
+        StrBuf[StrLength - 1 - i] = (u8)(Temp + 48);
+    }
+}
+
+internal void DisplayString(game_buffer *Buffer, const u8 *Str, u32 StrLength, u32 X, u32 Y, u32 Size)
+{
+    // DisplayString("SCORE", StringSize, X, Y);
+    u32 *Pixels = (u32 *)Buffer->Memory;
+    
+    for(u8 i = 0; i < StrLength; i++)
+    {
+        u8 Symbol  = Str[i];
+        u8 *CharBmp = NULL;
+        
+        if(Symbol == '\0')
+        {
+            break;
+        }
+        
+        switch(Symbol)
+        {
+            case 'S': {
+                u8 S[8] = {0xf0, 0x90, 0x80, 0xf0, 0x10, 0x90, 0xf0};
+                CharBmp= (u8*)(&S);
+                break;
+            }
+            
+            case 'C': {
+                u8 C[8] = {0xf0, 0x80, 0x80, 0x80, 0x80, 0x80, 0xf0};
+                CharBmp= (u8*)(&C);
+                break;
+            }
+            
+            case 'O': {
+                u8 O[8] = {0xf0, 0x90, 0x90, 0x90, 0x90, 0x90, 0xf0};
+                CharBmp= (u8*)(&O);
+                break;
+            }
+            
+            case 'R': {
+                u8 R[8] = {0xf0, 0x90, 0x90, 0xf0, 0xc0, 0xe0, 0xb0};
+                CharBmp= (u8*)(&R);
+                break;
+            }
+            
+            case 'E': {
+                u8 E[8] = {0xf0, 0x80, 0x80, 0xe0, 0x80, 0x80, 0xf0};
+                CharBmp= (u8*)(&E);
+                break;
+            }
+            
+            case '1': {
+                u8 _1[8] = {0x40, 0xc0, 0x40, 0x40, 0x40, 0x40, 0xe0};
+                CharBmp= (u8*)(&_1);
+                break;
+            }
+            
+            case '2': {
+                u8 _2[8] = {0x60, 0x90, 0x10, 0x20, 0x40, 0x80, 0xf0};
+                CharBmp= (u8*)(&_2);
+                break;
+            }
+            
+            case '3': {
+                u8 _3[8] = {0x60, 0x90, 0x10, 0x60, 0x10, 0x90, 0x60};
+                CharBmp= (u8*)(&_3);
+                break;
+            }
+            
+            case '4': {
+                u8 _4[8] = {0x10, 0x30, 0x50, 0x90, 0xf0, 0x10, 0x10};
+                CharBmp= (u8*)(&_4);
+                break;
+            }
+            
+            case '5': {
+                u8 _5[8] = {0xf0, 0x90, 0x80, 0xe0, 0x10, 0x10, 0xe0};
+                CharBmp= (u8*)(&_5);
+                break;
+            }
+            
+            case '6': {
+                u8 _6[8] = {0xf0, 0x90, 0x80, 0xf0, 0x90, 0x90, 0xf0};
+                CharBmp= (u8*)(&_6);
+                break;
+            }
+            
+            case '7': {
+                u8 _7[8] = {0xf0, 0x90, 0x10, 0x20, 0x40, 0xe0, 0x40};
+                CharBmp= (u8*)(&_7);
+                break;
+            }
+            
+            case '8': {
+                u8 _8[8] = {0xf0, 0x90, 0x90, 0xf0, 0x90, 0x90, 0xf0};
+                CharBmp= (u8*)(&_8);
+                break;
+            }
+            
+            case '9': {
+                u8 _9[8] = {0xf0, 0x90, 0x90, 0xf0, 0x10, 0x90, 0xf0};
+                CharBmp= (u8*)(&_9);
+                break;
+            }
+            
+            case '0': {
+                u8 _0[8] = {0xf0, 0x90, 0x90, 0x90, 0x90, 0x90, 0xf0};
+                CharBmp= (u8*)(&_0);
+                break;
+            }
+            
+            
+            default: {
+                u8 Default[8] = {0x0};
+                CharBmp= (u8*)(&Default);
+                break;
+            }
+        }
+        
+        for(i8 j = 0; j < 8; j++)
+        {
+            if(CharBmp[j] == '\0') {
+                break;
+            }
+            
+            for(u8 k = 0; k < 8; k++)
+            {
+                if(CharBmp[j] & (1 << k))
+                {
+                    // TODO(annad): Pass Colors.
+                    u32 LetterSpace = 8;
+                    u32 LetterShift = i * LetterSpace;
+                    u32 BitShiftX = X - k;
+                    u32 BitShiftY = Y - j;
+                    u32 GlobalX = Size * (BitShiftX + LetterShift);
+                    u32 GlobalY = Size * (BitShiftY);
+                    
+                    DrawRectangle(Buffer, GlobalX, GlobalY, Size, Size, 1.0f, 1.0f, 1.0f);
+                }
+            }
+        }
+    }
+}
+
 GAME_UPDATE_AND_RENDER(UpdateAndRender)
 {
     assert(sizeof(game_state) < Memory->PermanentStorageSize);
@@ -81,7 +287,8 @@ GAME_UPDATE_AND_RENDER(UpdateAndRender)
 #ifdef _GAME_INTERNAL
         State->BoolState = 1;
 #endif
-        State->MetaPixelSize = Buffer->Height / 55;
+        State->MetaPixelSize = Buffer->Height / 70;
+        State->Fail = false;
         
         Well->CellSideSize = State->MetaPixelSize * 3;
         Well->Width = WELL_WIDTH;
@@ -126,6 +333,15 @@ GAME_UPDATE_AND_RENDER(UpdateAndRender)
     
     // DEBUG_CheckWell(Well, Time);
     
+    if(State->Fail)
+    {
+        for(i16 i = 0; i < (sizeof(Well->Field) / sizeof(Well->Field[0])); i++)
+        {
+            Well->Field[i] = BLOCK_STATE_EMPTY;
+        }
+        
+        State->Fail = false;
+    }
     
     if(State->Pause == (b32)false)
     {
@@ -133,6 +349,8 @@ GAME_UPDATE_AND_RENDER(UpdateAndRender)
     }
     
     {
+        // NOTE(annad): Check player win (update well)
+        
         // TODO(annad): 
         // If it is relevant, you need to put this data in bit fields and use 
         // two bytes for everything. Only then will the size of the well 
@@ -158,6 +376,20 @@ GAME_UPDATE_AND_RENDER(UpdateAndRender)
                         Field[Y * Well->Width + X] = Field[(Y - 1) * Well->Width + X];
                     }
                 }
+            }
+        }
+    }
+    
+    {
+        // NOTE(annad): Check player fail.
+        block_state *Field = (block_state*)(&Well->Field);
+        
+        for(i16 X = 0; X < WELL_WIDTH; X++)
+        {
+            // NOTE(annad): Check just most high row!
+            if(Field[X] == BLOCK_STATE_FILLED)
+            {
+                State->Fail = true;
             }
         }
     }
@@ -196,7 +428,8 @@ GAME_UPDATE_AND_RENDER(UpdateAndRender)
                 else if(Input->PressedKey == KEY_SPACE)
                 {
                     // TODO(saiel): All except KEY_SPACE must be handle in pause check.
-                    State->Pause = !State->Pause;
+                    // State->Pause = !State->Pause;
+                    __debugbreak();
                 }
                 else
                 {
@@ -237,4 +470,12 @@ GAME_UPDATE_AND_RENDER(UpdateAndRender)
 #endif
         }
     }
+    // DisplayString(game_buffer *Buffer, const u8 *Str, u32 StrLength, u32 X, u32 Y, u32 Size)
+    
+    IToStr(State->StrBuffer, 16, Time->BeginTime);
+    
+    u32 TimePosY = (Buffer->Height / 3);
+    u32 TimePosX = (Buffer->Width / 3);
+    
+    DisplayString(Buffer, State->StrBuffer, 16, TimePosX, TimePosY, 2);
 }

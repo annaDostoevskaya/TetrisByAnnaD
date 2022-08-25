@@ -9,8 +9,8 @@ Description: <empty>
 #ifndef WELL_H
 #define WELL_H
 
-#define WELL_WIDTH 9
-#define WELL_HEIGHT 16
+#define WELL_WIDTH 10
+#define WELL_HEIGHT 20
 
 enum block_state
 {

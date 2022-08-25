@@ -24,10 +24,13 @@ struct game_state
 #endif
     b16 Initialized;
     b16 Pause;
+    b32 Fail;
     
     u32 MetaPixelSize;
     well Well;
     tetro Tetro;
+    
+    u8 StrBuffer[16];
 };
 
 #define GAME_UPDATE_AND_RENDER(name) internal void name(game_buffer *Buffer, \
