@@ -17,6 +17,8 @@ struct game_memory
 {
     u8 PermanentStorage[PERMANENT_STORAGE_SIZE]; // NOTE(annad): We have to fit in 4KB
     u64 PermanentStorageSize;
+    
+    b32 Run;
 };
 
 struct game_time 
@@ -54,5 +56,18 @@ struct game_buffer
     void *Memory;
 };
 
+#define GAME_UPDATE_AND_RENDER(name) void name(game_buffer *Buffer, \
+game_input *Input, \
+game_memory *Memory, \
+game_time *Time)
+
+typedef GAME_UPDATE_AND_RENDER(game_update_and_render);
+
+struct game
+{
+    game_update_and_render *UpdateAndRender;
+};
+
+extern "C" GAME_UPDATE_AND_RENDER(UpdateAndRender);
 
 #endif //SDL_GAME_H

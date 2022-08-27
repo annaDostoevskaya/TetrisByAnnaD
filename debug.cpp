@@ -9,6 +9,7 @@ Description: <empty>
 #include <windows.h>
 #include <stdio.h>
 
+#if 0
 internal void DEBUG_GetStructInfo(game_state *Data)
 {
     char Buffer[256];
@@ -49,6 +50,7 @@ internal void DEBUG_GetStructInfo(game_state *Data)
     
     // __debugbreak();
 }
+#endif
 
 
 internal void DEBUG_DrawELT(game_buffer *Buffer)

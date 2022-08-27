@@ -54,41 +54,38 @@ void AddressSwap(void **Addr1, void **Addr2)
 // rand.cpp
 //
 
-u32 GetRandomNumber(u32 Min, u32 Max)
+// TODO(annad): We must remove this in future.
+
+#include <stdlib.h>
+#include <time.h>
+
+i64 GetRandomNumber(i64 Max)
 {
-    localv u32 Index = 0;
-    localv u32 RADNMON_NUMBERS[100] = {
-        3, 1, 6, 4, 4, 3, 
-        3, 4, 1, 4, 5, 5, 
-        0, 2, 0, 0, 3, 5, 
-        5, 1, 6, 6, 3, 5, 
-        4, 2, 4, 1, 2, 6, 
-        1, 6, 1, 3, 0, 4, 
-        5, 2, 4, 6, 0, 2, 
-        2, 2, 1, 5, 5, 3, 
-        2, 6, 4, 3, 2, 3, 
-        0, 4, 2, 0, 1, 0, 
-        5, 5, 0, 5, 4, 6, 
-        2, 1, 2, 6, 6, 5, 
-        2, 6, 5, 0, 2, 1, 
-        5, 1, 0, 1, 5, 1, 
-        4, 2, 6, 2, 4, 4, 
-        6, 0, 6, 2, 6, 2, 
-        0, 6, 4, 3
-    };
-    
-    Index++;
-    if(Index == 100) 
-        Index = 0;
-    
-    u32 Result = RADNMON_NUMBERS[Index];
-    
+    srand((unsigned int)time(NULL));
+    i64 Result = (rand() % Max);
     return Result;
 }
 
 //
 // rand.cpp
 //
+
+tetro_type GetRandmonTetro(tetro_type *TetroTypesBag, u32 *TetroTypesBagSize)
+{
+    if(*TetroTypesBagSize == 0)
+    {
+        *TetroTypesBagSize = TETRO_TOTAL;
+    }
+    
+    u32 RandomIndex = (u32)GetRandomNumber(*TetroTypesBagSize);
+    tetro_type RandomType = TetroTypesBag[RandomIndex];
+    TetroTypesBag[RandomIndex] = TetroTypesBag[*TetroTypesBagSize - 1];
+    TetroTypesBag[*TetroTypesBagSize - 1] = RandomType;
+    
+    *TetroTypesBagSize -= 1;
+    
+    return RandomType;
+}
 
 void ChangeStateBlocksTetro(well *Well, block_state BlockState, i8Vec2 *TetroContent, i16Vec2 *TetroPos)
 {
@@ -194,7 +191,7 @@ void UpdateTetroContent(well *Well, tetro *Tetro)
     DrawTetro(Well, Tetro->Content, Tetro->Pos);
 }
 
-void UpdateTetro(well *Well, tetro *Tetro, game_time *Time)
+void UpdateTetro(game_state *State, well *Well, tetro *Tetro, game_time *Time)
 {
     // NOTE(saiel): Move this to top.
     if(Tetro->AccumTime < Tetro->DownTime)
@@ -210,12 +207,14 @@ void UpdateTetro(well *Well, tetro *Tetro, game_time *Time)
         // TODO(annad): This should be done better.
         case TETRO_STATE_SPAWN:
         {
+            State->Score = State->Score + MAX_TETRO_SIZE;
+            
             Tetro->Pos->X = Tetro->ShadowPos->X = Well->Width / 2;
             Tetro->Pos->Y = Tetro->ShadowPos->Y = Well->Height - 1;
             
             // TODO(annad): Radmon.
             // Tetro->Type = (tetro_type)GetRandomNumber(0, (u32)TETRO_TOTAL);
-            Tetro->Type = (tetro_type)6;
+            Tetro->Type = GetRandmonTetro((tetro_type*)(&Tetro->TypesBag), &Tetro->TypesBagSize);
             
             // TODO(saiel): We must do more strong typizatino for this and remove pointers, then remove memcpy()
             // NOTE(saiel): memcpy() fast then copy a memory, because use SIMD. It's partly hardware thing.

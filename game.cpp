@@ -6,10 +6,10 @@ Date: August 1st 2022 9:09 pm
 Description: <empty>
 */
 
+#include "sdl_game.h"
 #include "game.h"
 
 #include <assert.h>
-
 
 //
 // draw.cpp
@@ -63,83 +63,27 @@ internal void DrawRectangle(game_buffer *Buffer,
 #include "debug.cpp"
 #endif
 
-#include "sdl_game.cpp"
 #include "well.cpp"
 #include "tetro.cpp"
 
-//
-// math.cpp
-//
-
-internal u64 Power(u64 Number, u32 Degree)
-{
-    if(Degree == 0)
-    {
-        Number = 1;
-    }
-    
-    u64 Temp = Number;
-    while(Degree > 0)
-    {
-        Temp *= Number;
-        Degree--;
-    }
-    
-    return Temp;
-}
-
-//
-// math.cpp
-//
-
 internal void IToStr(u8 *StrBuf, u32 StrLength, u64 Integer)
 {
-    u32 Temp = 0;
     for(i32 i = 0; i < StrLength; i++)
     {
-        if(i != 0)
-        {
-            u64 Divider = Power(10, i);
-            u64 PrevDivider = (Power(10, i) / 10);
-            
-            if(Integer % PrevDivider == Integer)
-            {
-                Temp = 0;
-            }
-            else
-            {
-                Temp = (((Integer % Divider) - (Integer % PrevDivider)) % 9);
-                
-                if(((Integer % Divider) - (Integer % PrevDivider)) == 0)
-                {
-                    Temp = 0;
-                }
-                else
-                {
-                    if(Temp == 0)
-                    {
-                        Temp = 9;
-                    }
-                }
-            }
-        }
-        else 
-        {
-            Temp = (Integer % 10);
-        }
-        
-        StrBuf[StrLength - 1 - i] = (u8)(Temp + 48);
+        // NOTE(annad): Gift from Saiel, Thanks.
+        u64 Digit = Integer % 10;
+        Integer /= 10;
+        StrBuf[StrLength - 1 - i] = (u8)(Digit + '0');
     }
 }
 
 internal void DisplayString(game_buffer *Buffer, const u8 *Str, u32 StrLength, u32 X, u32 Y, u32 Size)
 {
-    // DisplayString("SCORE", StringSize, X, Y);
     u32 *Pixels = (u32 *)Buffer->Memory;
     
     for(u8 i = 0; i < StrLength; i++)
     {
-        u8 Symbol  = Str[i];
+        u8 Symbol = Str[i];
         u8 *CharBmp = NULL;
         
         if(Symbol == '\0')
@@ -149,96 +93,114 @@ internal void DisplayString(game_buffer *Buffer, const u8 *Str, u32 StrLength, u
         
         switch(Symbol)
         {
+            // TODO(annad): Convert this arrays[8] to one u64 integer!!! and add hash map for accessing and get elements without switch!!!
             case 'S': {
                 u8 S[8] = {0xf0, 0x90, 0x80, 0xf0, 0x10, 0x90, 0xf0};
-                CharBmp= (u8*)(&S);
+                CharBmp = (u8*)(&S);
                 break;
             }
             
             case 'C': {
                 u8 C[8] = {0xf0, 0x80, 0x80, 0x80, 0x80, 0x80, 0xf0};
-                CharBmp= (u8*)(&C);
+                CharBmp = (u8*)(&C);
                 break;
             }
             
             case 'O': {
                 u8 O[8] = {0xf0, 0x90, 0x90, 0x90, 0x90, 0x90, 0xf0};
-                CharBmp= (u8*)(&O);
+                CharBmp = (u8*)(&O);
                 break;
             }
             
             case 'R': {
                 u8 R[8] = {0xf0, 0x90, 0x90, 0xf0, 0xc0, 0xe0, 0xb0};
-                CharBmp= (u8*)(&R);
+                CharBmp = (u8*)(&R);
                 break;
             }
             
             case 'E': {
                 u8 E[8] = {0xf0, 0x80, 0x80, 0xe0, 0x80, 0x80, 0xf0};
-                CharBmp= (u8*)(&E);
+                CharBmp = (u8*)(&E);
                 break;
             }
             
             case '1': {
                 u8 _1[8] = {0x40, 0xc0, 0x40, 0x40, 0x40, 0x40, 0xe0};
-                CharBmp= (u8*)(&_1);
+                CharBmp = (u8*)(&_1);
                 break;
             }
             
             case '2': {
                 u8 _2[8] = {0x60, 0x90, 0x10, 0x20, 0x40, 0x80, 0xf0};
-                CharBmp= (u8*)(&_2);
+                CharBmp = (u8*)(&_2);
                 break;
             }
             
             case '3': {
                 u8 _3[8] = {0x60, 0x90, 0x10, 0x60, 0x10, 0x90, 0x60};
-                CharBmp= (u8*)(&_3);
+                CharBmp = (u8*)(&_3);
                 break;
             }
             
             case '4': {
                 u8 _4[8] = {0x10, 0x30, 0x50, 0x90, 0xf0, 0x10, 0x10};
-                CharBmp= (u8*)(&_4);
+                CharBmp = (u8*)(&_4);
                 break;
             }
             
             case '5': {
                 u8 _5[8] = {0xf0, 0x90, 0x80, 0xe0, 0x10, 0x10, 0xe0};
-                CharBmp= (u8*)(&_5);
+                CharBmp = (u8*)(&_5);
                 break;
             }
             
             case '6': {
                 u8 _6[8] = {0xf0, 0x90, 0x80, 0xf0, 0x90, 0x90, 0xf0};
-                CharBmp= (u8*)(&_6);
+                CharBmp = (u8*)(&_6);
                 break;
             }
             
             case '7': {
                 u8 _7[8] = {0xf0, 0x90, 0x10, 0x20, 0x40, 0xe0, 0x40};
-                CharBmp= (u8*)(&_7);
+                CharBmp = (u8*)(&_7);
                 break;
             }
             
             case '8': {
                 u8 _8[8] = {0xf0, 0x90, 0x90, 0xf0, 0x90, 0x90, 0xf0};
-                CharBmp= (u8*)(&_8);
+                CharBmp = (u8*)(&_8);
                 break;
             }
             
             case '9': {
                 u8 _9[8] = {0xf0, 0x90, 0x90, 0xf0, 0x10, 0x90, 0xf0};
-                CharBmp= (u8*)(&_9);
+                CharBmp = (u8*)(&_9);
                 break;
             }
             
             case '0': {
                 u8 _0[8] = {0xf0, 0x90, 0x90, 0x90, 0x90, 0x90, 0xf0};
-                CharBmp= (u8*)(&_0);
+                CharBmp = (u8*)(&_0);
                 break;
             }
             
+            case ':': {
+                u8 Colon[8] = {0x40, 0x40, 0x0, 0x0, 0x0, 0x40, 0x40};
+                CharBmp = (u8*)(&Colon);
+                break;
+            }
+            
+            case ' ': {
+                u8 Space[8] = {0x0};
+                CharBmp = (u8*)(&Space);
+                break;
+            }
+            
+            case 'D': {
+                u8 D[8] = {0xe0, 0x90, 0x90, 0x90, 0x90, 0x90, 0xe0};
+                CharBmp = (u8*)(&D);
+                break;
+            }
             
             default: {
                 u8 Default[8] = {0x0};
@@ -249,44 +211,49 @@ internal void DisplayString(game_buffer *Buffer, const u8 *Str, u32 StrLength, u
         
         for(i8 j = 0; j < 8; j++)
         {
-            if(CharBmp[j] == '\0') {
-                break;
-            }
-            
             for(u8 k = 0; k < 8; k++)
             {
                 if(CharBmp[j] & (1 << k))
                 {
                     // TODO(annad): Pass Colors.
-                    u32 LetterSpace = 8;
+                    u32 LetterSpace = 8 * Size;
                     u32 LetterShift = i * LetterSpace;
-                    u32 BitShiftX = X - k;
-                    u32 BitShiftY = Y - j;
-                    u32 GlobalX = Size * (BitShiftX + LetterShift);
-                    u32 GlobalY = Size * (BitShiftY);
+                    u32 BitShiftX = X - (k * Size);
+                    u32 BitShiftY = Y - (j * Size);
+                    u32 MetaPixel = (Buffer->Height / 70) / 7;
+                    // u32 GlobalX = MetaPixel * (BitShiftX + LetterShift);
+                    // u32 GlobalY = MetaPixel * (BitShiftY);
+                    u32 GlobalX = MetaPixel * (BitShiftX + LetterShift);
+                    u32 GlobalY = MetaPixel * (BitShiftY);
                     
-                    DrawRectangle(Buffer, GlobalX, GlobalY, Size, Size, 1.0f, 1.0f, 1.0f);
+                    // DrawRectangle(Buffer, GlobalX, GlobalY, Size * MetaPixel, Size * MetaPixel, 1.0f, 1.0f, 1.0f);
+                    DrawRectangle(Buffer, GlobalX, GlobalY, MetaPixel * Size, MetaPixel * Size, 1.0f, 1.0f, 1.0f);
                 }
             }
         }
     }
 }
 
-GAME_UPDATE_AND_RENDER(UpdateAndRender)
+extern "C" GAME_UPDATE_AND_RENDER(UpdateAndRender)
 {
     assert(sizeof(game_state) < Memory->PermanentStorageSize);
     
     // NOTE(annad): Init.
     // NOTE(saiel): Objectively, this UB.
     game_state *State = (game_state *)Memory->PermanentStorage;
+    
     well *Well = &State->Well;
     tetro *Tetro = &State->Tetro;
     
     if(State->Initialized != (b32)true)
     {
+        
+#if 0        
 #ifdef _GAME_INTERNAL
         State->BoolState = 1;
 #endif
+#endif
+        
         State->MetaPixelSize = Buffer->Height / 70;
         State->Fail = false;
         
@@ -327,8 +294,18 @@ GAME_UPDATE_AND_RENDER(UpdateAndRender)
         Tetro->DownTime = 500;
         Tetro->AccumTime = Tetro->DownTime;
         
+        tetro_type TypesBag[TETRO_TOTAL] = {
+            TETRO_O, TETRO_T, TETRO_L,
+            TETRO_J, TETRO_Z, TETRO_S, TETRO_I,
+        };
+        
+        static_assert(sizeof(Tetro->TypesBag) == sizeof(TypesBag));
+        memcpy((void*)(&Tetro->TypesBag), (void*)(&TypesBag), sizeof(TypesBag));
+        Tetro->TypesBagSize = TETRO_TOTAL;
+        
         State->Pause = false;
         State->Initialized = true;
+        State->Score = 0;
     }
     
     // DEBUG_CheckWell(Well, Time);
@@ -340,12 +317,18 @@ GAME_UPDATE_AND_RENDER(UpdateAndRender)
             Well->Field[i] = BLOCK_STATE_EMPTY;
         }
         
+        if(State->Score > State->Record)
+        {
+            State->Record = State->Score;
+        }
+        
+        State->Score = 0;
         State->Fail = false;
     }
     
     if(State->Pause == (b32)false)
     {
-        UpdateTetro(Well, Tetro, Time);
+        UpdateTetro(State, Well, Tetro, Time);
     }
     
     {
@@ -396,12 +379,15 @@ GAME_UPDATE_AND_RENDER(UpdateAndRender)
     
     RenderWell(Buffer, Well);
     
+    
+#if 0    
 #ifdef _GAME_INTERNAL
     // DrawRectangle(Buffer, State->PosX, State->PosY, State->PlayerSize, State->PlayerSize, META_PIXEL_COLOR, META_PIXEL_COLOR, META_PIXEL_COLOR);
-    DEBUG_CheckAllPositions(Buffer, Time, Well->CellSideSize);
+    // DEBUG_CheckAllPositions(Buffer, Time, Well->CellSideSize);
     DEBUG_DrawGrid(Buffer, Well->CellSideSize);
     // DrawRectangle(Buffer, 0, Buffer->Height, 50, 50, META_PIXEL_COLOR, META_PIXEL_COLOR, META_PIXEL_COLOR);
     // DEBUG_DrawELT(Buffer);
+#endif
 #endif
     
     {
@@ -456,6 +442,8 @@ GAME_UPDATE_AND_RENDER(UpdateAndRender)
                     }
                 }
             }
+            
+#if 0            
 #ifdef _GAME_INTERNAL
             if(CheckCollideTetro(Well, Tetro->Content, Tetro->Pos))
             {
@@ -468,14 +456,37 @@ GAME_UPDATE_AND_RENDER(UpdateAndRender)
             
             DEBUG_BoolInScreen(Buffer, State->BoolState);
 #endif
+#endif
+            
         }
     }
-    // DisplayString(game_buffer *Buffer, const u8 *Str, u32 StrLength, u32 X, u32 Y, u32 Size)
     
-    IToStr(State->StrBuffer, 16, Time->BeginTime);
+    // Initialize mb?..
+    memcpy((void*)State->StrBuffer, (void*)"SCORE: ", 7);
     
-    u32 TimePosY = (Buffer->Height / 3);
-    u32 TimePosX = (Buffer->Width / 3);
+    IToStr(&State->StrBuffer[7], 9, State->Score);
     
-    DisplayString(Buffer, State->StrBuffer, 16, TimePosX, TimePosY, 2);
+    /*     
+        u32 ScorePosX = (Buffer->Width / 2) / 3 - ((Buffer->Width / 2) / 6);
+        u32 ScorePosY = Buffer->Height - (Buffer->Height / 3) + (Buffer->Height / 6);
+         */
+    
+    u32 FontPixel = (State->MetaPixelSize) / 7; // 2
+    u32 MetaFontWidth = Buffer->Width / FontPixel;
+    u32 MetaFontHeight = Buffer->Height / FontPixel;
+    
+    u32 ScorePosX = (MetaFontWidth / 2) / 3 - ((MetaFontWidth / 2) / 6);;
+    u32 ScorePosY = MetaFontHeight - (MetaFontHeight / 3) + (MetaFontHeight / 6);
+    
+    DisplayString(Buffer, State->StrBuffer, 16, ScorePosX, ScorePosY, 2);
+    
+    // record
+    memcpy((void*)State->StrBuffer, (void*)"RECORD: ", 7);
+    
+    IToStr(&State->StrBuffer[7], 9, State->Record);
+    
+    u32 RecordPosX = (MetaFontWidth / 2) / 3 - ((MetaFontWidth / 2) / 6);
+    u32 RecordPosY = MetaFontHeight - (MetaFontHeight / 3) + (MetaFontHeight / 8);
+    
+    DisplayString(Buffer, State->StrBuffer, 16, RecordPosX, RecordPosY, 2);
 }

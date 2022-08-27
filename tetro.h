@@ -40,9 +40,10 @@ enum tetro_type
 struct tetro
 {
     i8Vec2 Tetrominos[TETRO_TOTAL][MAX_TETRO_SIZE];
-    
     tetro_state State;
     tetro_type Type;
+    tetro_type TypesBag[TETRO_TOTAL];
+    u32 TypesBagSize;
     
     // TODO(saiel): This can be two arrays, without pointers.
     i16Vec2 *Pos;

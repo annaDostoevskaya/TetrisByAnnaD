@@ -17,11 +17,15 @@ Description: <empty>
 
 struct game_state
 {
+    
+#if 0    
 #ifdef _GAME_INTERNAL
     // NOTE(annad): Just for test, see DEBUG_GetInfo()
     bool stub;
     b32 BoolState;
 #endif
+#endif
+    
     b16 Initialized;
     b16 Pause;
     b32 Fail;
@@ -30,14 +34,10 @@ struct game_state
     well Well;
     tetro Tetro;
     
+    u64 Score;
+    u64 Record;
+    
     u8 StrBuffer[16];
 };
-
-#define GAME_UPDATE_AND_RENDER(name) internal void name(game_buffer *Buffer, \
-game_input *Input, \
-game_memory *Memory, \
-game_time *Time)
-
-GAME_UPDATE_AND_RENDER(UpdateAndRender);
 
 #endif //GAME_H

@@ -8,9 +8,8 @@ Description: <empty>
 
 // TODO(annad): Sound!
 
-#include <windows.h>
-
 #ifdef _GAME_INTERNAL
+#include <windows.h>
 #include <stdio.h>
 #endif
 
@@ -20,8 +19,8 @@ Description: <empty>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_audio.h>
 
-#define SCREEN_WIDTH 1920/2
-#define SCREEN_HEIGHT 1080/2
+#define SCREEN_WIDTH 1920
+#define SCREEN_HEIGHT 1080
 
 /* 
 // TODO(annad): Audio, but later...
@@ -77,11 +76,6 @@ int main(int Argc, char **Argv)
     game_input GameInput = {};
     // NOTE(annad): Event for quit.
     SDL_Event Event = {};
-    b32 Run = true;
-    
-    // NOTE(annad): Game Memory Section.
-    game_memory GameMemory = {};
-    GameMemory.PermanentStorageSize = PERMANENT_STORAGE_SIZE;
     
     // NOTE(annad): Setup timer and frame rate.
     u32 FrameRate = 30;
@@ -120,6 +114,27 @@ int main(int Argc, char **Argv)
     // sdl_audio
     //
     
+    game Game = {};
+    void *GameDLLHandle = SDL_LoadObject("./game.dll");
+    if(!GameDLLHandle)
+    {
+        OutputDebugString("Can't load DLL file!");
+        return -1;
+    }
+    
+    Game.UpdateAndRender = (game_update_and_render*)SDL_LoadFunction(GameDLLHandle, "UpdateAndRender");
+    
+    if(!Game.UpdateAndRender)
+    {
+        OutputDebugString("Can't load DLL file!");
+        return -1;
+    }
+    
+    // NOTE(annad): Game Memory Section.
+    game_memory GameMemory = {};
+    GameMemory.PermanentStorageSize = PERMANENT_STORAGE_SIZE;
+    
+    b32 Run = true;
     while(Run)
     {
         // NOTE(annad): Cleaning all data from previous frame.
@@ -191,7 +206,7 @@ int main(int Argc, char **Argv)
         }
         
         // NOTE(annad): Main.
-        UpdateAndRender(&GameBuffer, &GameInput, &GameMemory, &GameTime);
+        Game.UpdateAndRender(&GameBuffer, &GameInput, &GameMemory, &GameTime);
         
         SDL_UpdateWindowSurface(Window);
         
@@ -220,6 +235,7 @@ int main(int Argc, char **Argv)
         GameTime.BeginTime = GameTime.EndTime;
     }
     
+    SDL_UnloadObject(GameDLLHandle);
     SDL_CloseAudio();
     SDL_FreeSurface(Buffer);
     SDL_DestroyWindow(Window);

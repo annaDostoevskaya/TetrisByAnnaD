@@ -18,7 +18,10 @@ if not exist SDL2.dll (
   exit /B -1
 )
 
-cl %opts% %code%\game.cpp -Fegame %lib_path%\SDL2\SDL2.lib %lib_path%\SDL2\SDL2main.lib -I%include_path% shell32.lib /link /SUBSYSTEM:WINDOWS
+cl %opts% %code%\sdl_game.cpp -Fesdl_game.exe %lib_path%\SDL2\SDL2.lib %lib_path%\SDL2\SDL2main.lib -I%include_path% shell32.lib /link /SUBSYSTEM:WINDOWS
+
+cl %opts% %code%\game.cpp -Fegame.dll -I%include_path% /LD /link /SUBSYSTEM:WINDOWS -EXPORT:UpdateAndRender
+
 popd
 
 utils\ctime.exe -end tetris.ctm %errorlevel%
