@@ -6,16 +6,19 @@ Date: August 1st 2022 9:09 pm
 Description: <empty>
 */
 
-#include "sdl_game.h"
 #include "game.h"
 
 #include <assert.h>
+
+#ifdef _GAME_INTERNAL
+#include <math.h>
+#endif
 
 //
 // draw.cpp
 //
 
-internal void DrawRectangle(game_buffer *Buffer, 
+internal void DrawRectangle(game_screen_buffer *Buffer, 
                             i32 PosX, i32 PosY, u32 W, u32 H,
                             r32 Red, r32 Green, r32 Blue)
 {
@@ -77,7 +80,89 @@ internal void IToStr(u8 *StrBuf, u32 StrLength, u64 Integer)
     }
 }
 
-internal void DisplayString(game_buffer *Buffer, const u8 *Str, u32 StrLength, u32 X, u32 Y, u32 Size)
+inline r64 Remainder(r64 Dividend, r64 Divisor)
+{
+    return Dividend - (r64)((u64)((Dividend / Divisor) * Divisor));
+}
+
+internal u64 GetCharBitmap(u64 *Storage, u64 StorageSize, u8 Chr)
+{
+    r64 Rem = Remainder(Chr * 0.6180339887, 1.0f);
+    u64 BaseIndex = (u64)floor((r64)StorageSize * Rem);
+    
+    u64 ChrBmp = 0x0;
+    u64 Mask = 0xFF;
+    
+    i16 ShiftIndex = 0;
+    for(ShiftIndex = 0; BaseIndex + ShiftIndex < StorageSize; ShiftIndex++)
+    {
+        ChrBmp = Storage[BaseIndex + ShiftIndex];
+        if(Chr == (u8)(ChrBmp & Mask))
+        {
+            return ChrBmp;
+        }
+    }
+    
+    for(ShiftIndex = 0; ShiftIndex < BaseIndex; ShiftIndex++)
+    {
+        ChrBmp = Storage[ShiftIndex];
+        if(Chr == (u8)(ChrBmp & Mask))
+        {
+            return ChrBmp;
+        }
+    }
+    
+    return 0x0;
+}
+
+internal void PushCharBitmap(u64 *Storage, u64 StorageSize, u64 ChrBmp)
+{
+    u64 Mask = 0xFF;
+    u8 Chr = (u8)(ChrBmp & Mask);
+    r64 Rem = Remainder(Chr * 0.6180339887, 1.0f);
+    u64 BaseIndex = (u64)floor((r64)StorageSize * Rem);
+    
+    i16 ShiftIndex = 0;
+    for(ShiftIndex = 0; BaseIndex + ShiftIndex < StorageSize; ShiftIndex++)
+    {
+        if(!Storage[BaseIndex + ShiftIndex])
+        {
+            Storage[BaseIndex + ShiftIndex] = ChrBmp;
+            return;
+        }
+    }
+    
+    for(ShiftIndex = 0; ShiftIndex < BaseIndex; ShiftIndex++)
+    {
+        if(!Storage[ShiftIndex])
+        {
+            Storage[ShiftIndex] = ChrBmp;
+            return;
+        }
+    }
+}
+
+#define CHAR_BITMAP_C 0xf08080808080f043
+#define CHAR_BITMAP_D 0xe09090909090e044
+#define CHAR_BITMAP_E 0xf08080e08080f045
+#define CHAR_BITMAP_O 0xf09090909090f04f
+#define CHAR_BITMAP_R 0xb0e0c0f09090f052
+#define CHAR_BITMAP_S 0xf09010f08090f053
+#define CHAR_BITMAP_1 0xe040404040c04031
+#define CHAR_BITMAP_2 0xf080402010906032
+#define CHAR_BITMAP_3 0x6090106010906033
+#define CHAR_BITMAP_4 0x1010f09050301034
+#define CHAR_BITMAP_5 0xe01010e08090f035
+#define CHAR_BITMAP_6 0xf09090f08090f036
+#define CHAR_BITMAP_7 0x40e040201090f037
+#define CHAR_BITMAP_8 0xf09090f09090f038
+#define CHAR_BITMAP_9 0xf09010f09090f039
+#define CHAR_BITMAP_0 0xf09090909090f030
+#define CHAR_BITMAP_COLON 0x404000000040403a
+// #define CHAR_BITMAP_SPACE 0x000000000000000
+// #define CHAR_BITMAP_DEFAULT 0x0000000000000000
+
+internal void DisplayString(game_state *State, game_screen_buffer *Buffer, const u8 *Str, u32 StrLength, u32 X, u32 Y, u32 Size)
 {
     u32 *Pixels = (u32 *)Buffer->Memory;
     
@@ -86,130 +171,158 @@ internal void DisplayString(game_buffer *Buffer, const u8 *Str, u32 StrLength, u
         u8 Symbol = Str[i];
         u8 *CharBmp = NULL;
         
-        if(Symbol == '\0')
+        if(Symbol == '\0' || Symbol == ' ')
         {
-            break;
+            continue;
         }
+        // 0.6180339887 (Knuth)
         
-        switch(Symbol)
-        {
-            // TODO(annad): Convert this arrays[8] to one u64 integer!!! and add hash map for accessing and get elements without switch!!!
-            case 'S': {
-                u8 S[8] = {0xf0, 0x90, 0x80, 0xf0, 0x10, 0x90, 0xf0};
-                CharBmp = (u8*)(&S);
-                break;
-            }
-            
-            case 'C': {
-                u8 C[8] = {0xf0, 0x80, 0x80, 0x80, 0x80, 0x80, 0xf0};
-                CharBmp = (u8*)(&C);
-                break;
-            }
-            
-            case 'O': {
-                u8 O[8] = {0xf0, 0x90, 0x90, 0x90, 0x90, 0x90, 0xf0};
-                CharBmp = (u8*)(&O);
-                break;
-            }
-            
-            case 'R': {
-                u8 R[8] = {0xf0, 0x90, 0x90, 0xf0, 0xc0, 0xe0, 0xb0};
-                CharBmp = (u8*)(&R);
-                break;
-            }
-            
-            case 'E': {
-                u8 E[8] = {0xf0, 0x80, 0x80, 0xe0, 0x80, 0x80, 0xf0};
-                CharBmp = (u8*)(&E);
-                break;
-            }
-            
-            case '1': {
-                u8 _1[8] = {0x40, 0xc0, 0x40, 0x40, 0x40, 0x40, 0xe0};
-                CharBmp = (u8*)(&_1);
-                break;
-            }
-            
-            case '2': {
-                u8 _2[8] = {0x60, 0x90, 0x10, 0x20, 0x40, 0x80, 0xf0};
-                CharBmp = (u8*)(&_2);
-                break;
-            }
-            
-            case '3': {
-                u8 _3[8] = {0x60, 0x90, 0x10, 0x60, 0x10, 0x90, 0x60};
-                CharBmp = (u8*)(&_3);
-                break;
-            }
-            
-            case '4': {
-                u8 _4[8] = {0x10, 0x30, 0x50, 0x90, 0xf0, 0x10, 0x10};
-                CharBmp = (u8*)(&_4);
-                break;
-            }
-            
-            case '5': {
-                u8 _5[8] = {0xf0, 0x90, 0x80, 0xe0, 0x10, 0x10, 0xe0};
-                CharBmp = (u8*)(&_5);
-                break;
-            }
-            
-            case '6': {
-                u8 _6[8] = {0xf0, 0x90, 0x80, 0xf0, 0x90, 0x90, 0xf0};
-                CharBmp = (u8*)(&_6);
-                break;
-            }
-            
-            case '7': {
-                u8 _7[8] = {0xf0, 0x90, 0x10, 0x20, 0x40, 0xe0, 0x40};
-                CharBmp = (u8*)(&_7);
-                break;
-            }
-            
-            case '8': {
-                u8 _8[8] = {0xf0, 0x90, 0x90, 0xf0, 0x90, 0x90, 0xf0};
-                CharBmp = (u8*)(&_8);
-                break;
-            }
-            
-            case '9': {
-                u8 _9[8] = {0xf0, 0x90, 0x90, 0xf0, 0x10, 0x90, 0xf0};
-                CharBmp = (u8*)(&_9);
-                break;
-            }
-            
-            case '0': {
-                u8 _0[8] = {0xf0, 0x90, 0x90, 0x90, 0x90, 0x90, 0xf0};
-                CharBmp = (u8*)(&_0);
-                break;
-            }
-            
-            case ':': {
-                u8 Colon[8] = {0x40, 0x40, 0x0, 0x0, 0x0, 0x40, 0x40};
-                CharBmp = (u8*)(&Colon);
-                break;
-            }
-            
-            case ' ': {
-                u8 Space[8] = {0x0};
-                CharBmp = (u8*)(&Space);
-                break;
-            }
-            
-            case 'D': {
-                u8 D[8] = {0xe0, 0x90, 0x90, 0x90, 0x90, 0x90, 0xe0};
-                CharBmp = (u8*)(&D);
-                break;
-            }
-            
-            default: {
-                u8 Default[8] = {0x0};
-                CharBmp= (u8*)(&Default);
-                break;
-            }
-        }
+        u64 ProxyChrBmp = GetCharBitmap(State->ChrBmp, 17, Symbol);
+        CharBmp = (u8*)(&ProxyChrBmp);
         
-        for(i8 j = 0; j < 8; j++)
+        /*         
+                switch(Symbol)
+                {
+                    // [ 0x20, 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3a, 0x43, 0x44, 0x45, 0x4f, 0x52, 0x53 ]
+                    //   13    11    4     15    8     2     12    6     16    10    3     14    6     0     10    14    11    5
+                    // TODO(annad): Convert this arrays[8] to one u64 integer!!! and add hash map for accessing and get elements without switch!!!
+                    // Floor(18 * (k * 0.6180339887 % 1));
+                    case 'S': {
+                        // 0x53
+                        u64 S = CHAR_BITMAP_S;
+                        CharBmp = (u8*)(&S);
+                        break;
+                    }
+                    
+                    case 'C': {
+                        // 0x43
+                        u64 C = CHAR_BITMAP_C;
+                        CharBmp = (u8*)(&C);
+                        break;
+                    }
+                    
+                    case 'O': {
+                        // 0x4f
+                        u64 O = CHAR_BITMAP_O;
+                        CharBmp = (u8*)(&O);
+                        break;
+                    }
+                    
+                    case 'R': {
+                        // 0x52
+                        u64 R = CHAR_BITMAP_R;
+                        CharBmp = (u8*)(&R);
+                        break;
+                    }
+                    
+                    case 'E': {
+                        // 0x45
+                        u64 E = CHAR_BITMAP_E;
+                        CharBmp = (u8*)(&E);
+                        break;
+                    }
+                    
+                    case '1': {
+                        // 0x31
+                        u64 _1 = CHAR_BITMAP_1;
+                        CharBmp = (u8*)(&_1);
+                        break;
+                    }
+                    
+                    case '2': {
+                        // 0x32 
+                        u64 _2 = CHAR_BITMAP_2;
+                        CharBmp = (u8*)(&_2);
+                        break;
+                    }
+                    
+                    case '3': {
+                        // 0x33
+                        u64 _3 = CHAR_BITMAP_3;
+                        CharBmp = (u8*)(&_3);
+                        break;
+                    }
+                    
+                    case '4': {
+                        // 0x34
+                        u64 _4 = CHAR_BITMAP_4;
+                        CharBmp = (u8*)(&_4);
+                        break;
+                    }
+                    
+                    case '5': {
+                        // 0x35
+                        u64 _5 = CHAR_BITMAP_5;
+                        CharBmp = (u8*)(&_5);
+                        break;
+                    }
+                    
+                    case '6': {
+                        // 0x36
+                        u64 _6 = CHAR_BITMAP_6;
+                        CharBmp = (u8*)(&_6);
+                        break;
+                    }
+                    
+                    case '7': {
+                        // 0x37
+                        u64 _7 = CHAR_BITMAP_7;
+                        CharBmp = (u8*)(&_7);
+                        break;
+                    }
+                    
+                    case '8': {
+                        // 0x38
+                        u64 _8 = CHAR_BITMAP_8;
+                        CharBmp = (u8*)(&_8);
+                        break;
+                    }
+                    
+                    case '9': {
+                        // 0x39
+                        u64 _9 = CHAR_BITMAP_9;
+                        CharBmp = (u8*)(&_9);
+                        break;
+                    }
+                    
+                    case '0': {
+                        // 0x30
+                        u64 _0 = CHAR_BITMAP_0;
+                        CharBmp = (u8*)(&_0);
+                        break;
+                    }
+                    
+                    case ':': {
+                        // 0x3a
+                        u64 Colon = CHAR_BITMAP_COLON;
+                        CharBmp = (u8*)(&Colon);
+                        break;
+                    }
+                    
+                    case ' ': {
+                        // 0x20
+                        u64 Space = 0x0;
+                        CharBmp = (u8*)(&Space);
+                        break;
+                    }
+                    
+                    case 'D': {
+                        // 0x44
+                        u64 D = CHAR_BITMAP_D;
+                        CharBmp = (u8*)(&D);
+                        break;
+                    }
+                    
+                    default: {
+                        // 0x0
+                        u64 Default = 0x0;
+                        CharBmp = (u8*)(&Default);
+                        break;
+                    }
+                }
+                 */
+        
+        for(i8 j = 7; j > 0; j--)
         {
             for(u8 k = 0; k < 8; k++)
             {
@@ -234,10 +347,60 @@ internal void DisplayString(game_buffer *Buffer, const u8 *Str, u32 StrLength, u
     }
 }
 
+#define PI 3.14159265359
+
+globalv r64 V = 0;
+globalv i32 GI = 0;
+globalv i32 hz = 450;
+
+extern "C" GAME_UPDATE_SOUND_BUFFER(UpdateSoundBuffer)
+{
+    assert(sizeof(game_state) < Memory->PermanentStorageSize);
+    game_state *State = (game_state *)Memory->PermanentStorage;
+    
+    if(State->BeepFlag)
+    {
+        if(GI == SoundBuffer->StreamLen)
+        {
+            GI = 0;
+        }
+        
+        while(GI < SoundBuffer->StreamLen)
+        {
+            SoundBuffer->Stream[GI] = (i16)(10000.0f * sin(V * 2 * PI / SoundBuffer->Frequency));
+            V += hz;
+            GI++;
+        }
+        
+        State->BeepFlag = false;
+    }
+    else 
+    {
+        if(GI == SoundBuffer->StreamLen)
+        {
+            GI = 0;
+        }
+        
+        while(GI < SoundBuffer->StreamLen)
+        {
+            SoundBuffer->Stream[GI] = 0;
+            V += hz;
+            GI++;
+        }
+    }
+}
+
+#define ZEROING_MEMORY(Mem, MemSize) \
+u8* _Memory = (u8*)Mem; \
+\
+for(i32 i = 0; i < MemSize; i++) \
+{ \
+_Memory[i] = 0; \
+}
+
 extern "C" GAME_UPDATE_AND_RENDER(UpdateAndRender)
 {
     assert(sizeof(game_state) < Memory->PermanentStorageSize);
-    
     // NOTE(annad): Init.
     // NOTE(saiel): Objectively, this UB.
     game_state *State = (game_state *)Memory->PermanentStorage;
@@ -306,9 +469,30 @@ extern "C" GAME_UPDATE_AND_RENDER(UpdateAndRender)
         State->Pause = false;
         State->Initialized = true;
         State->Score = 0;
+        
+        PushCharBitmap(State->ChrBmp, 17, CHAR_BITMAP_C);
+        PushCharBitmap(State->ChrBmp, 17, CHAR_BITMAP_D);
+        PushCharBitmap(State->ChrBmp, 17, CHAR_BITMAP_E);
+        PushCharBitmap(State->ChrBmp, 17, CHAR_BITMAP_O);
+        PushCharBitmap(State->ChrBmp, 17, CHAR_BITMAP_R);
+        PushCharBitmap(State->ChrBmp, 17, CHAR_BITMAP_S);
+        PushCharBitmap(State->ChrBmp, 17, CHAR_BITMAP_1);
+        PushCharBitmap(State->ChrBmp, 17, CHAR_BITMAP_2);
+        PushCharBitmap(State->ChrBmp, 17, CHAR_BITMAP_3);
+        PushCharBitmap(State->ChrBmp, 17, CHAR_BITMAP_4);
+        PushCharBitmap(State->ChrBmp, 17, CHAR_BITMAP_5);
+        PushCharBitmap(State->ChrBmp, 17, CHAR_BITMAP_6);
+        PushCharBitmap(State->ChrBmp, 17, CHAR_BITMAP_7);
+        PushCharBitmap(State->ChrBmp, 17, CHAR_BITMAP_8);
+        PushCharBitmap(State->ChrBmp, 17, CHAR_BITMAP_9);
+        PushCharBitmap(State->ChrBmp, 17, CHAR_BITMAP_0);
+        PushCharBitmap(State->ChrBmp, 17, CHAR_BITMAP_COLON);
     }
     
     // DEBUG_CheckWell(Well, Time);
+    
+    char _StrBuf[256];
+    sprintf(_StrBuf, "%d\n", (int)sizeof(Tetro->ContentBuffers));
     
     if(State->Fail)
     {
@@ -317,6 +501,8 @@ extern "C" GAME_UPDATE_AND_RENDER(UpdateAndRender)
             Well->Field[i] = BLOCK_STATE_EMPTY;
         }
         
+        Tetro->State = TETRO_STATE_SPAWN;
+        
         if(State->Score > State->Record)
         {
             State->Record = State->Score;
@@ -324,6 +510,14 @@ extern "C" GAME_UPDATE_AND_RENDER(UpdateAndRender)
         
         State->Score = 0;
         State->Fail = false;
+        // TODO(annad): It can be done better. 
+        // Here you are clearing the buffers because there 
+        // is a bug that uses them between 500 milliseconds and the tetro control code.
+        // 
+        // Therefore, after the field is cleared, 
+        // the previous block is drawn there again, 
+        // taken from the buffer, by the tetromino control code.
+        // ZEROING_MEMORY(Tetro->ContentBuffers, sizeof(Tetro->ContentBuffers));
     }
     
     if(State->Pause == (b32)false)
@@ -363,24 +557,9 @@ extern "C" GAME_UPDATE_AND_RENDER(UpdateAndRender)
         }
     }
     
-    {
-        // NOTE(annad): Check player fail.
-        block_state *Field = (block_state*)(&Well->Field);
-        
-        for(i16 X = 0; X < WELL_WIDTH; X++)
-        {
-            // NOTE(annad): Check just most high row!
-            if(Field[X] == BLOCK_STATE_FILLED)
-            {
-                State->Fail = true;
-            }
-        }
-    }
-    
     RenderWell(Buffer, Well);
     
     
-#if 0    
 #ifdef _GAME_INTERNAL
     // DrawRectangle(Buffer, State->PosX, State->PosY, State->PlayerSize, State->PlayerSize, META_PIXEL_COLOR, META_PIXEL_COLOR, META_PIXEL_COLOR);
     // DEBUG_CheckAllPositions(Buffer, Time, Well->CellSideSize);
@@ -388,48 +567,63 @@ extern "C" GAME_UPDATE_AND_RENDER(UpdateAndRender)
     // DrawRectangle(Buffer, 0, Buffer->Height, 50, 50, META_PIXEL_COLOR, META_PIXEL_COLOR, META_PIXEL_COLOR);
     // DEBUG_DrawELT(Buffer);
 #endif
-#endif
     
     {
-        if(!CheckCollideTetro(Well, Tetro->Content, Tetro->Pos))
+        if(!CheckCollideTetro(Well, Tetro->Content, Tetro->Pos) && Tetro->State == TETRO_STATE_IN_PROGRESS)
         {
             if(Input->PressedKey != KEY_NOTHING)
             {
-                // NOTE(annad): Input handling.
-                if(Input->PressedKey == KEY_UP)
+                if(Input->PressedKey == KEY_ROTATE_RIGHT || Input->PressedKey == KEY_ROTATE_LEFT)
                 {
                     if(Tetro->Type != TETRO_O) // NOTE(annad): Absolutely legal crutch.
                     {
-                        // TODO(annad): Check this static assert...?..
-                        static_assert(sizeof(Tetro->ShadowContent) == sizeof(Tetro->Content));
-                        static_assert(sizeof(Tetro->ShadowContent) == SIZEOF_TETRO_BLOCK * MAX_TETRO_SIZE);
-                        memcpy((void*)Tetro->ShadowContent, (void*)Tetro->Content, SIZEOF_TETRO_BLOCK * MAX_TETRO_SIZE);
-                        RotateTetro(Well, Tetro->ShadowContent);
-                        if(!CheckCollideTetro(Well, Tetro->ShadowContent, Tetro->Pos))
+                        // NOTE(annad): Input handling.
+                        if(Input->PressedKey == KEY_ROTATE_RIGHT)
                         {
-                            UpdateTetroContent(Well, Tetro);
+                            static_assert(sizeof(Tetro->ShadowContent) == sizeof(Tetro->Content));
+                            static_assert(sizeof(Tetro->ShadowContent) == SIZEOF_TETRO_BLOCK * MAX_TETRO_SIZE);
+                            memcpy((void*)Tetro->ShadowContent, (void*)Tetro->Content, SIZEOF_TETRO_BLOCK * MAX_TETRO_SIZE);
+                            RotateTetro(Well, Tetro->ShadowContent);
+                            if(!CheckCollideTetro(Well, Tetro->ShadowContent, Tetro->Pos))
+                            {
+                                UpdateTetroContent(Well, Tetro);
+                            }
+                        }
+                        else if(Input->PressedKey == KEY_ROTATE_LEFT)
+                        {
+                            // TODO(annad): Rotate left, matrix rotation!
+                            static_assert(sizeof(Tetro->ShadowContent) == sizeof(Tetro->Content));
+                            static_assert(sizeof(Tetro->ShadowContent) == SIZEOF_TETRO_BLOCK * MAX_TETRO_SIZE);
+                            memcpy((void*)Tetro->ShadowContent, (void*)Tetro->Content, SIZEOF_TETRO_BLOCK * MAX_TETRO_SIZE);
+                            RotateTetro(Well, Tetro->ShadowContent);
+                            if(!CheckCollideTetro(Well, Tetro->ShadowContent, Tetro->Pos))
+                            {
+                                UpdateTetroContent(Well, Tetro);
+                            }
                         }
                     }
                 }
+#ifdef _GAME_INTERNAL
                 else if(Input->PressedKey == KEY_SPACE)
                 {
                     // TODO(saiel): All except KEY_SPACE must be handle in pause check.
                     // State->Pause = !State->Pause;
                     __debugbreak();
                 }
+#endif
                 else
                 {
                     i8Vec2 MoveVector = {0, 0};
                     
-                    if(Input->PressedKey == KEY_DOWN)
+                    if(Input->PressedKey == KEY_MOVE_DOWN)
                     {
                         MoveVector = {0, -1};
                     }
-                    else if(Input->PressedKey == KEY_LEFT)
+                    else if(Input->PressedKey == KEY_MOVE_LEFT)
                     {
                         MoveVector = {-1, 0};
                     }
-                    else if(Input->PressedKey == KEY_RIGHT)
+                    else if(Input->PressedKey == KEY_MOVE_RIGHT)
                     {
                         MoveVector = {1, 0};
                     }
@@ -443,7 +637,7 @@ extern "C" GAME_UPDATE_AND_RENDER(UpdateAndRender)
                 }
             }
             
-#if 0            
+#if 0
 #ifdef _GAME_INTERNAL
             if(CheckCollideTetro(Well, Tetro->Content, Tetro->Pos))
             {
@@ -457,7 +651,6 @@ extern "C" GAME_UPDATE_AND_RENDER(UpdateAndRender)
             DEBUG_BoolInScreen(Buffer, State->BoolState);
 #endif
 #endif
-            
         }
     }
     
@@ -478,7 +671,7 @@ extern "C" GAME_UPDATE_AND_RENDER(UpdateAndRender)
     u32 ScorePosX = (MetaFontWidth / 2) / 3 - ((MetaFontWidth / 2) / 6);;
     u32 ScorePosY = MetaFontHeight - (MetaFontHeight / 3) + (MetaFontHeight / 6);
     
-    DisplayString(Buffer, State->StrBuffer, 16, ScorePosX, ScorePosY, 2);
+    DisplayString(State, Buffer, State->StrBuffer, 16, ScorePosX, ScorePosY, 2);
     
     // record
     memcpy((void*)State->StrBuffer, (void*)"RECORD: ", 7);
@@ -487,6 +680,6 @@ extern "C" GAME_UPDATE_AND_RENDER(UpdateAndRender)
     
     u32 RecordPosX = (MetaFontWidth / 2) / 3 - ((MetaFontWidth / 2) / 6);
     u32 RecordPosY = MetaFontHeight - (MetaFontHeight / 3) + (MetaFontHeight / 8);
-    
-    DisplayString(Buffer, State->StrBuffer, 16, RecordPosX, RecordPosY, 2);
+    memcpy((void*)State->StrBuffer, (void*)"RECORD: ", 7);
+    DisplayString(State, Buffer, State->StrBuffer, 16, RecordPosX, RecordPosY, 2);
 }

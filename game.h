@@ -9,6 +9,8 @@ Description: <empty>
 #ifndef GAME_H
 #define GAME_H
 
+#include "platform_game.h"
+
 #include "math.h"
 #include "base_types.h"
 #include "sdl_game.h"
@@ -38,6 +40,10 @@ struct game_state
     u64 Record;
     
     u8 StrBuffer[16];
+    
+    b8 BeepFlag;
+    
+    u64 ChrBmp[17];
 };
 
 #endif //GAME_H

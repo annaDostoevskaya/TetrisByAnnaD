@@ -56,7 +56,7 @@ void AddressSwap(void **Addr1, void **Addr2)
 
 // TODO(annad): We must remove this in future.
 
-#include <stdlib.h>
+#include <stdlib.h>  // TODO(annad): memcpy
 #include <time.h>
 
 i64 GetRandomNumber(i64 Max)
@@ -221,6 +221,17 @@ void UpdateTetro(game_state *State, well *Well, tetro *Tetro, game_time *Time)
             memcpy((void*)(&Tetro->ContentBuffers[0]), (void*)(&Tetro->Tetrominos[Tetro->Type]), sizeof(i8Vec2) * MAX_TETRO_SIZE);
             memcpy((void*)(&Tetro->ContentBuffers[1]), (void*)(&Tetro->ContentBuffers[0]), sizeof(i8Vec2) * MAX_TETRO_SIZE);
             
+            // FIXME(annad): Here, when a new tetro spawns, 
+            // you need to check the collide, and if there is 
+            // already a collide, saying that the player has lost, 
+            // this is the best way to calculate the player's defeat.
+            
+            if(CheckCollideTetro(Well, Tetro->Content, Tetro->Pos))
+            {
+                State->Fail = true;
+                break;
+            }
+            
             DrawTetro(Well, Tetro->Content, Tetro->Pos);
             
             Tetro->State = TETRO_STATE_IN_PROGRESS;
@@ -248,6 +259,9 @@ void UpdateTetro(game_state *State, well *Well, tetro *Tetro, game_time *Time)
         
         case TETRO_STATE_FALL:
         {
+            // NOTE(annad): audio
+            State->BeepFlag = true;
+            
             DropTetro(Well, Tetro->Content, Tetro->Pos);
             Tetro->State = TETRO_STATE_SPAWN;
             break;

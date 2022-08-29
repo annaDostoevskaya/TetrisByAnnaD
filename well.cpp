@@ -12,7 +12,7 @@ Description: <empty>
 #define INTERNAL_FIELD_COLOR 0.0f
 #define FILLED_BLOCKS_COLOR 0.93f
 
-internal void RenderWell(game_buffer *Buffer, well *Well)
+internal void RenderWell(game_screen_buffer *Buffer, well *Well)
 {
     // NOTE(annad): Borders it's just black rectangle in white rectangle!
     DrawRectangle(Buffer, 

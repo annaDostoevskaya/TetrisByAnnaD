@@ -11,28 +11,40 @@ Description: <empty>
 #ifdef _GAME_INTERNAL
 #include <windows.h>
 #include <stdio.h>
+#include <math.h>
+#endif
+
+#ifndef _GAME_INTERNAL
+void OutputDebugString(const char *) {}
 #endif
 
 #include "base_types.h"
+#include "platform_game.h"
 #include "sdl_game.h"
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_audio.h>
 
-#define SCREEN_WIDTH 1920
-#define SCREEN_HEIGHT 1080
+#define SCREEN_WIDTH 1920/2
+#define SCREEN_HEIGHT 1080/2
 
-/* 
-// TODO(annad): Audio, but later...
-#define NUM_SOUNDS 1
+#define FREQ 44100
+#define SAMPLES 2048
 
-const u32 SOUND_BUFFER_SIZE = 512;
-
-void MixAudio(void *Udata, Uint8 *stream, int len)
+void MixAudio(void *Udata, Uint8 *Stream, int StreamLen)
 {
+    sdl_mix_audio_user_data *SDLMixAudioUserData = (sdl_mix_audio_user_data *)Udata;
+    game_memory *GameMemory = SDLMixAudioUserData->GameMemory;
+    game_update_sound_buffer *GameUpdateSoundBuffer = SDLMixAudioUserData->GameUpdateSoundBuffer;
     
+    game_sound_buffer GameSoundBuffer = {}; 
+    GameSoundBuffer.Stream = (i16*)Stream;
+    GameSoundBuffer.StreamLen = StreamLen / 2;
+    GameSoundBuffer.Frequency = FREQ;
+    GameSoundBuffer.Samples = SAMPLES;
+    
+    GameUpdateSoundBuffer(GameMemory, &GameSoundBuffer);
 }
- */
 
 int main(int Argc, char **Argv)
 {
@@ -44,7 +56,7 @@ int main(int Argc, char **Argv)
     }
     
     SDL_Window *Window = NULL;
-    SDL_Surface *Buffer = NULL;
+    SDL_Surface *ScreenBuffer = NULL;
     
     Window = SDL_CreateWindow("Tetris by Anna Dostoevskaya", 
                               SDL_WINDOWPOS_UNDEFINED, 
@@ -58,19 +70,19 @@ int main(int Argc, char **Argv)
         return -1;
     }
     
-    Buffer = SDL_GetWindowSurface(Window);
-    if(Buffer == NULL)
+    ScreenBuffer= SDL_GetWindowSurface(Window);
+    if(ScreenBuffer == NULL)
     {
         OutputDebugString("Surface could not be created!");
         return -1;
     }
     
     // NOTE(annad): Buffer for rendering to window.
-    game_buffer GameBuffer = {};
-    GameBuffer.Width = Buffer->w;
-    GameBuffer.Height = Buffer->h;
-    GameBuffer.Pitch = Buffer->pitch;
-    GameBuffer.Memory = Buffer->pixels;
+    game_screen_buffer GameScreenBuffer = {};
+    GameScreenBuffer.Width = ScreenBuffer->w;
+    GameScreenBuffer.Height = ScreenBuffer->h;
+    GameScreenBuffer.Pitch = ScreenBuffer->pitch;
+    GameScreenBuffer.Memory = ScreenBuffer->pixels;
     
     // NOTE(annad): Keys states.
     game_input GameInput = {};
@@ -86,34 +98,7 @@ int main(int Argc, char **Argv)
     GameTime.EndTime = GameTime.BeginTime;
     GameTime.dt = GameTime.EndTime - GameTime.BeginTime;
     
-    //
-    // sdl_audio
-    //
-    
-    /*     
-    // TODO(annad): Audio, but later...
-        SDL_AudioSpec AudioFormat;
-        
-        AudioFormat.freq = 48000; // freq is samples per seconds.
-        AudioFormat.format = AUDIO_S16; // sample is 16 bit, dependency format.
-        AudioFormat.channels = 1; // 16 bit per channel.
-        AudioFormat.samples = SOUND_BUFFER_SIZE; 
-        AudioFormat.callback = MixAudio;
-        AudioFormat.userdata = (void*)(&AudioFormat);
-        
-        if(SDL_OpenAudio(&AudioFormat, NULL) < 0)
-        {
-            OutputDebugString("Unable to open audio");
-            return -1;
-        }
-        
-        SDL_PauseAudio(0);
-         */
-    
-    //
-    // sdl_audio
-    //
-    
+    // NOTE(annad): Load game code.
     game Game = {};
     void *GameDLLHandle = SDL_LoadObject("./game.dll");
     if(!GameDLLHandle)
@@ -123,10 +108,16 @@ int main(int Argc, char **Argv)
     }
     
     Game.UpdateAndRender = (game_update_and_render*)SDL_LoadFunction(GameDLLHandle, "UpdateAndRender");
-    
     if(!Game.UpdateAndRender)
     {
-        OutputDebugString("Can't load DLL file!");
+        OutputDebugString("Can't load \"UpdateAndRender\" from DLL file!");
+        return -1;
+    }
+    
+    Game.UpdateSoundBuffer = (game_update_sound_buffer*)SDL_LoadFunction(GameDLLHandle, "UpdateSoundBuffer");
+    if(!Game.UpdateSoundBuffer)
+    {
+        OutputDebugString("Can't load \"UpdateSoundBuffer\" DLL file!");
         return -1;
     }
     
@@ -134,11 +125,41 @@ int main(int Argc, char **Argv)
     game_memory GameMemory = {};
     GameMemory.PermanentStorageSize = PERMANENT_STORAGE_SIZE;
     
+    //
+    // sdl_audio
+    //
+    
+    SDL_AudioSpec AudioFormat;
+    
+    AudioFormat.freq = FREQ; // freq is samples per seconds.
+    AudioFormat.format = AUDIO_S16; // sample is 16 bit, dependency format.
+    AudioFormat.channels = 1; // 16 bit per channel.
+    AudioFormat.samples = SAMPLES;
+    
+    sdl_mix_audio_user_data SDLMixAudioUserData = {};
+    SDLMixAudioUserData.GameUpdateSoundBuffer = Game.UpdateSoundBuffer;
+    SDLMixAudioUserData.GameMemory = &GameMemory;
+    
+    AudioFormat.callback = MixAudio;
+    AudioFormat.userdata = (void*)(&SDLMixAudioUserData);
+    
+    if(SDL_OpenAudio(&AudioFormat, NULL) < 0)
+    {
+        OutputDebugString("Unable to open audio");
+        return -1;
+    }
+    
+    SDL_PauseAudio(0);
+    
+    //
+    // sdl_audio
+    //
+    
     b32 Run = true;
     while(Run)
     {
         // NOTE(annad): Cleaning all data from previous frame.
-        SDL_FillRect(Buffer, NULL, SDL_MapRGB(Buffer->format, 0, 0, 0));
+        SDL_FillRect(ScreenBuffer, NULL, SDL_MapRGB(ScreenBuffer->format, 0, 0, 0));
         GameInput.PressedKey = KEY_NOTHING;
         
         // NOTE(annad): Events.
@@ -157,36 +178,42 @@ int main(int Argc, char **Argv)
                 {
                     switch(Event.key.keysym.sym)
                     {
-                        case SDLK_UP:
-                        {
-                            GameInput.PressedKey = KEY_UP;
-                            break;
-                        }
-                        
                         case SDLK_DOWN:
                         {
-                            GameInput.PressedKey = KEY_DOWN;
+                            GameInput.PressedKey = KEY_MOVE_DOWN;
                             break;
                         }
                         
                         case SDLK_LEFT:
                         {
-                            GameInput.PressedKey = KEY_LEFT;
+                            GameInput.PressedKey = KEY_MOVE_LEFT;
                             break;
                         }
                         
                         case SDLK_RIGHT:
                         {
-                            GameInput.PressedKey = KEY_RIGHT;
+                            GameInput.PressedKey = KEY_MOVE_RIGHT;
                             break;
                         }
                         
+                        case SDLK_z:
+                        {
+                            GameInput.PressedKey = KEY_ROTATE_LEFT;
+                            break;
+                        }
+                        
+                        case SDLK_x:
+                        {
+                            GameInput.PressedKey = KEY_ROTATE_RIGHT;
+                            break;
+                        }
+#ifdef _GAME_INTERNAL
                         case SDLK_SPACE:
                         {
                             GameInput.PressedKey = KEY_SPACE;
                             break;
                         }
-                        
+#endif
                         default:
                         {
                             GameInput.PressedKey = KEY_NOTHING;
@@ -206,7 +233,7 @@ int main(int Argc, char **Argv)
         }
         
         // NOTE(annad): Main.
-        Game.UpdateAndRender(&GameBuffer, &GameInput, &GameMemory, &GameTime);
+        Game.UpdateAndRender(&GameScreenBuffer, &GameInput, &GameMemory, &GameTime);
         
         SDL_UpdateWindowSurface(Window);
         
@@ -237,7 +264,7 @@ int main(int Argc, char **Argv)
     
     SDL_UnloadObject(GameDLLHandle);
     SDL_CloseAudio();
-    SDL_FreeSurface(Buffer);
+    SDL_FreeSurface(ScreenBuffer);
     SDL_DestroyWindow(Window);
     SDL_Quit();
     

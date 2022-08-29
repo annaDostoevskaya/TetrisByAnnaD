@@ -53,7 +53,7 @@ internal void DEBUG_GetStructInfo(game_state *Data)
 #endif
 
 
-internal void DEBUG_DrawELT(game_buffer *Buffer)
+internal void DEBUG_DrawELT(game_screen_buffer *Buffer)
 {
     u32 *Pixels = (u32 *)Buffer->Memory;
     for(u32 Y = 0; Y < Buffer->Height; Y++)
@@ -76,7 +76,7 @@ internal void DEBUG_DrawELT(game_buffer *Buffer)
 }
 
 
-internal void DEBUG_DrawGrid(game_buffer *Buffer, u32 GridCellSize)
+internal void DEBUG_DrawGrid(game_screen_buffer *Buffer, u32 GridCellSize)
 {
     
     localv u32 ShiftX = 130; // NOTE(annad): magic value calculated empirically so that the grid is level
@@ -99,7 +99,7 @@ internal void DEBUG_DrawGrid(game_buffer *Buffer, u32 GridCellSize)
 }
 
 
-internal void DEBUG_CheckAllPositions(game_buffer *Buffer, game_time *Time, u32 CheckerSize)
+internal void DEBUG_CheckAllPositions(game_screen_buffer *Buffer, game_time *Time, u32 CheckerSize)
 {
     u32 CountX = Buffer->Width / CheckerSize;
     u32 CountY = Buffer->Height / CheckerSize;
@@ -178,7 +178,7 @@ void DEBUG_CheckWell(well *Well, game_time *Time)
     Accum += Time->dt;
 }
 
-void DEBUG_Draw_1(game_buffer *Buffer, u32Vec2 Pos)
+void DEBUG_Draw_1(game_screen_buffer *Buffer, u32Vec2 Pos)
 {
     u32 *Pixels = (u32 *)Buffer->Memory;
     
@@ -191,7 +191,7 @@ void DEBUG_Draw_1(game_buffer *Buffer, u32Vec2 Pos)
     }
 }
 
-void DEBUG_Draw_0(game_buffer *Buffer, u32Vec2 Pos)
+void DEBUG_Draw_0(game_screen_buffer *Buffer, u32Vec2 Pos)
 {
     u32 *Pixels = (u32 *)Buffer->Memory;
     
@@ -215,7 +215,7 @@ void DEBUG_Draw_0(game_buffer *Buffer, u32Vec2 Pos)
     }
 }
 
-void DEBUG_BoolInScreen(game_buffer *Buffer, b32 state)
+void DEBUG_BoolInScreen(game_screen_buffer *Buffer, b32 state)
 {
     u32Vec2 Pos = {100, 100};
     if(state == 1)
