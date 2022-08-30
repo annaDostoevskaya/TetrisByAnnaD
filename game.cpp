@@ -463,7 +463,7 @@ extern "C" GAME_UPDATE_AND_RENDER(UpdateAndRender)
                 {
                     // TODO(saiel): All except KEY_SPACE must be handle in pause check.
                     // State->Pause = !State->Pause;
-                    __debugbreak();
+                    // __debugbreak();
                 }
 #endif
                 else

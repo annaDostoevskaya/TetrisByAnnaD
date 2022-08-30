@@ -9,10 +9,15 @@ Description: <empty>
 // TODO(annad): Sound!
 
 #ifdef _GAME_INTERNAL
+#ifdef _GAME_WIN32
 #include <windows.h>
+#endif // _GAME_WIN32
+#ifdef _GAME_LINUX
+void OutputDebugString(const char *DebugString) {}
+#endif // _GAME_LINUX
 #include <stdio.h>
 #include <math.h>
-#endif
+#endif // _GAME_INTERNAL
 
 #ifndef _GAME_INTERNAL
 void OutputDebugString(const char *) {}

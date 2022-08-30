@@ -57,6 +57,7 @@ void AddressSwap(void **Addr1, void **Addr2)
 // TODO(annad): We must remove this in future.
 
 #include <stdlib.h>  // TODO(annad): memcpy
+#include <string.h>
 #include <time.h>
 
 i64 GetRandomNumber(i64 Max)

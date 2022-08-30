@@ -6,7 +6,10 @@ Date: August 7th 2022 5:29 pm
 Description: <empty>
 */
 
+#ifdef _GAME_WIN32
 #include <windows.h>
+#endif // _GAME_WIN32
+
 #include <stdio.h>
 
 #if 0
