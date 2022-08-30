@@ -11,7 +11,8 @@ Description: <empty>
 
 #include "platform_game.h"
 
-#include "math.h"
+#include "algs.h"
+#include "mmath.h"
 #include "base_types.h"
 #include "sdl_game.h"
 #include "well.h"
@@ -49,3 +50,4 @@ struct game_state
 };
 
 #endif //GAME_H
+

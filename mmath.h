@@ -1,6 +1,6 @@
 /* 
 Author: github.com/annadostoevskaya
-File: math.h
+File: mmath.h
 Date: August 19th 2022 10:57 pm 
 
 Description: <empty>
@@ -10,6 +10,8 @@ Description: <empty>
 #define MATH_H
 
 #include "base_types.h"
+
+#include <immintrin.h> // NOTE(annad): Idk, it's processor or compiler dependecy?.
 
 struct i8Vec2
 {
@@ -47,5 +49,12 @@ struct u32Vec2
     u32 Y;
 };
 
+//
+//
+//
+
+r64 SVMLSin(r64 Degress);
+inline r64 Remainder(r64 Dividend, r64 Divisor);
 
 #endif //MATH_H
+

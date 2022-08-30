@@ -92,3 +92,4 @@ extern "C" GAME_UPDATE_AND_RENDER(UpdateAndRender);
 extern "C" GAME_UPDATE_SOUND_BUFFER(UpdateSoundBuffer);
 
 #endif //PLATFROM_GAME_H
+

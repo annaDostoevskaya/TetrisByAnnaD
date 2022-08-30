@@ -33,3 +33,4 @@ typedef bool b8;
 #define localv static
 
 #endif //BASE_TYPES_H
+

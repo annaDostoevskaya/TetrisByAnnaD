@@ -16,3 +16,4 @@ struct sdl_mix_audio_user_data
 };
 
 #endif //SDL_GAME_H
+

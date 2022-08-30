@@ -74,3 +74,4 @@ void UpdateTetroContent(well *Well, tetro *Tetro);
 void UpdateTetro(well *Well, tetro *Tetro, game_time *Time);
 
 #endif //TETRO_H
+

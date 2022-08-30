@@ -10,10 +10,6 @@ Description: <empty>
 
 #include <assert.h>
 
-#ifdef _GAME_INTERNAL
-#include <math.h>
-#endif
-
 //
 // draw.cpp
 //
@@ -68,27 +64,13 @@ internal void DrawRectangle(game_screen_buffer *Buffer,
 
 #include "well.cpp"
 #include "tetro.cpp"
-
-internal void IToStr(u8 *StrBuf, u32 StrLength, u64 Integer)
-{
-    for(i32 i = 0; i < StrLength; i++)
-    {
-        // NOTE(annad): Gift from Saiel, Thanks.
-        u64 Digit = Integer % 10;
-        Integer /= 10;
-        StrBuf[StrLength - 1 - i] = (u8)(Digit + '0');
-    }
-}
-
-inline r64 Remainder(r64 Dividend, r64 Divisor)
-{
-    return Dividend - (r64)((u64)((Dividend / Divisor) * Divisor));
-}
+#include "mmath.cpp"
+#include "algs.cpp"
 
 internal u64 GetCharBitmap(u64 *Storage, u64 StorageSize, u8 Chr)
 {
     r64 Rem = Remainder(Chr * 0.6180339887, 1.0f);
-    u64 BaseIndex = (u64)floor((r64)StorageSize * Rem);
+    u64 BaseIndex = (u64)Floor((r64)StorageSize * Rem);
     
     u64 ChrBmp = 0x0;
     u64 Mask = 0xFF;
@@ -121,7 +103,7 @@ internal void PushCharBitmap(u64 *Storage, u64 StorageSize, u64 ChrBmp)
     u8 Chr = (u8)(ChrBmp & Mask);
     // NOTE(annad): Thank you uncle Knuth...
     r64 Rem = Remainder(Chr * 0.6180339887, 1.0f);
-    u64 BaseIndex = (u64)floor((r64)StorageSize * Rem);
+    u64 BaseIndex = (u64)Floor((r64)StorageSize * Rem);
     
     i16 ShiftIndex = 0;
     for(ShiftIndex = 0; BaseIndex + ShiftIndex < StorageSize; ShiftIndex++)
@@ -228,7 +210,7 @@ extern "C" GAME_UPDATE_SOUND_BUFFER(UpdateSoundBuffer)
         
         while(GI < SoundBuffer->StreamLen)
         {
-            SoundBuffer->Stream[GI] = (i16)(10000.0f * sin(V * 2 * PI / SoundBuffer->Frequency));
+            SoundBuffer->Stream[GI] = (i16)(10000.0f * SVMLSin(V * 2 * PI / SoundBuffer->Frequency));
             V += hz;
             GI++;
         }
@@ -251,10 +233,20 @@ extern "C" GAME_UPDATE_SOUND_BUFFER(UpdateSoundBuffer)
     }
 }
 
+/* 
+extern "C" GAME_UPDATE_AND_RENDER(UpdateAndRender)
+{
+    u8 a[16 * 4 + 5] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21};
+    u8 b[16 * 4 + 5] = {};
+    __debugbreak();
+    SIMDMemoryCopy((void*)(&b), (void*)(&a), 16 * 4 + 5);
+}
+ */
+
 extern "C" GAME_UPDATE_AND_RENDER(UpdateAndRender)
 {
     assert(sizeof(game_state) < Memory->PermanentStorageSize);
-    __debugbreak();
+    // __debugbreak();
     // NOTE(annad): Init.
     // NOTE(saiel): Objectively, this UB.
     game_state *State = (game_state *)Memory->PermanentStorage;
@@ -300,7 +292,7 @@ extern "C" GAME_UPDATE_AND_RENDER(UpdateAndRender)
         };
         static_assert(sizeof(DefaultTetrominos) == (SIZEOF_TETRO_BLOCK * MAX_TETRO_SIZE * TETRO_TOTAL));
         static_assert(sizeof(Tetro->Tetrominos) == sizeof(DefaultTetrominos));
-        memcpy((void*)(&Tetro->Tetrominos), (void*)(&DefaultTetrominos), sizeof(DefaultTetrominos));
+        SIMDMemoryCopy((void*)(&Tetro->Tetrominos), (void*)(&DefaultTetrominos), sizeof(DefaultTetrominos));
         
         Tetro->Content = (i8Vec2*)(&Tetro->ContentBuffers[0]);
         Tetro->ShadowContent = (i8Vec2*)(&Tetro->ContentBuffers[1]);
@@ -317,7 +309,7 @@ extern "C" GAME_UPDATE_AND_RENDER(UpdateAndRender)
         };
         
         static_assert(sizeof(Tetro->TypesBag) == sizeof(TypesBag));
-        memcpy((void*)(&Tetro->TypesBag), (void*)(&TypesBag), sizeof(TypesBag));
+        SIMDMemoryCopy((void*)(&Tetro->TypesBag), (void*)(&TypesBag), sizeof(TypesBag));
         Tetro->TypesBagSize = TETRO_TOTAL;
         
         State->Pause = false;
@@ -437,7 +429,7 @@ extern "C" GAME_UPDATE_AND_RENDER(UpdateAndRender)
                         {
                             static_assert(sizeof(Tetro->ShadowContent) == sizeof(Tetro->Content));
                             static_assert(sizeof(Tetro->ShadowContent) == SIZEOF_TETRO_BLOCK * MAX_TETRO_SIZE);
-                            memcpy((void*)Tetro->ShadowContent, (void*)Tetro->Content, SIZEOF_TETRO_BLOCK * MAX_TETRO_SIZE);
+                            SIMDMemoryCopy((void*)Tetro->ShadowContent, (void*)Tetro->Content, SIZEOF_TETRO_BLOCK * MAX_TETRO_SIZE);
                             RotateTetro(Well, Tetro->ShadowContent);
                             if(!CheckCollideTetro(Well, Tetro->ShadowContent, Tetro->Pos))
                             {
@@ -449,7 +441,7 @@ extern "C" GAME_UPDATE_AND_RENDER(UpdateAndRender)
                             // TODO(annad): Rotate left, matrix rotation!
                             static_assert(sizeof(Tetro->ShadowContent) == sizeof(Tetro->Content));
                             static_assert(sizeof(Tetro->ShadowContent) == SIZEOF_TETRO_BLOCK * MAX_TETRO_SIZE);
-                            memcpy((void*)Tetro->ShadowContent, (void*)Tetro->Content, SIZEOF_TETRO_BLOCK * MAX_TETRO_SIZE);
+                            SIMDMemoryCopy((void*)Tetro->ShadowContent, (void*)Tetro->Content, SIZEOF_TETRO_BLOCK * MAX_TETRO_SIZE);
                             RotateTetro(Well, Tetro->ShadowContent);
                             if(!CheckCollideTetro(Well, Tetro->ShadowContent, Tetro->Pos))
                             {
@@ -510,7 +502,7 @@ extern "C" GAME_UPDATE_AND_RENDER(UpdateAndRender)
     }
     
     // Initialize mb?..
-    memcpy((void*)State->StrBuffer, (void*)"SCORE: ", 7);
+    SIMDMemoryCopy((void*)State->StrBuffer, (void*)"SCORE: ", 7);
     
     IToStr(&State->StrBuffer[7], 9, State->Score);
     
@@ -529,12 +521,13 @@ extern "C" GAME_UPDATE_AND_RENDER(UpdateAndRender)
     DisplayString(State, Buffer, State->StrBuffer, 16, ScorePosX, ScorePosY, 2);
     
     // record
-    memcpy((void*)State->StrBuffer, (void*)"RECORD: ", 7);
+    SIMDMemoryCopy((void*)State->StrBuffer, (void*)"RECORD: ", 7);
     
     IToStr(&State->StrBuffer[7], 9, State->Record);
     
     u32 RecordPosX = (MetaFontWidth / 2) / 3 - ((MetaFontWidth / 2) / 6);
     u32 RecordPosY = MetaFontHeight - (MetaFontHeight / 3) + (MetaFontHeight / 8);
-    memcpy((void*)State->StrBuffer, (void*)"RECORD: ", 7);
+    SIMDMemoryCopy((void*)State->StrBuffer, (void*)"RECORD: ", 7);
     DisplayString(State, Buffer, State->StrBuffer, 16, RecordPosX, RecordPosY, 2);
 }
+

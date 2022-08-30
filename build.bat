@@ -4,7 +4,7 @@ utils\ctime.exe -begin tetris.ctm
 
 REM REMOVE THIS !!! -wd4311 -wd4302 !!! FROM OPTS
 set opts_dev=-D_GAME_INTERNAL
-set opts=-FC -GR- -EHa- -nologo -Zi -Wall -WX -W3 -wd4018 -wd5045 -wd4996 -wd4311 -wd4302 %opts_dev%
+set opts=-FC -GR- -EHa- -nologo -Zi -Wall -WX -W3 -wd4018 -wd5045 -wd4996 -wd4311 -wd4302 %opts_dev% -D_GAME_WIN32
 
 set code=%cd%
 set lib_path=%code%\thirdparty\libs
@@ -26,3 +26,4 @@ cl %opts% %code%\game.cpp -Fegame.dll -I%include_path% /LD /link /SUBSYSTEM:WIND
 popd
 
 utils\ctime.exe -end tetris.ctm %errorlevel%
+

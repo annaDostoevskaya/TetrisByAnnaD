@@ -68,3 +68,4 @@ inline b32 WellBlockIsFilled(well *Well, i16Vec2 Pos)
 {
     return WellBlockIs(Well, BLOCK_STATE_FILLED, Pos);
 }
+

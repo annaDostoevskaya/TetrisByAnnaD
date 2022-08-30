@@ -15,8 +15,6 @@ Description: <empty>
 #ifdef _GAME_LINUX
 void OutputDebugString(const char *DebugString) {}
 #endif // _GAME_LINUX
-#include <stdio.h>
-#include <math.h>
 #endif // _GAME_INTERNAL
 
 #ifndef _GAME_INTERNAL
@@ -275,3 +273,4 @@ int main(int Argc, char **Argv)
     
     return 0;
 }
+

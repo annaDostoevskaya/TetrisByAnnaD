@@ -14,3 +14,4 @@ gcc $CODE/sdl_game.cpp -o sdl_game $SDL_FLAGS $GAME_FLAGS
 gcc $CODE/game.cpp -shared $SDL_FLAGS $GAME_FLAGS -o game.dll
 
 popd > /dev/null
+

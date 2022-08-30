@@ -230,3 +230,4 @@ void DEBUG_BoolInScreen(game_screen_buffer *Buffer, b32 state)
         DEBUG_Draw_0(Buffer, Pos);
     }
 }
+

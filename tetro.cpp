@@ -36,28 +36,13 @@ void MultiplyMatrices(i32 *M1, i32 *M2,
 //
 
 //
-// algs.cpp
-//
-
-void AddressSwap(void **Addr1, void **Addr2)
-{
-    void *temp = *Addr1;
-    *Addr1 = *Addr2;
-    *Addr2 = temp;
-}
-
-//
-// algs.cpp
-//
-
-//
 // rand.cpp
 //
 
 // TODO(annad): We must remove this in future.
 
-#include <stdlib.h>  // TODO(annad): memcpy
-#include <string.h>
+// #include <stdlib.h>  // TODO(annad): memcpy
+// #include <string.h>
 #include <time.h>
 
 i64 GetRandomNumber(i64 Max)
@@ -219,8 +204,8 @@ void UpdateTetro(game_state *State, well *Well, tetro *Tetro, game_time *Time)
             
             // TODO(saiel): We must do more strong typizatino for this and remove pointers, then remove memcpy()
             // NOTE(saiel): memcpy() fast then copy a memory, because use SIMD. It's partly hardware thing.
-            memcpy((void*)(&Tetro->ContentBuffers[0]), (void*)(&Tetro->Tetrominos[Tetro->Type]), sizeof(i8Vec2) * MAX_TETRO_SIZE);
-            memcpy((void*)(&Tetro->ContentBuffers[1]), (void*)(&Tetro->ContentBuffers[0]), sizeof(i8Vec2) * MAX_TETRO_SIZE);
+            SIMDMemoryCopy((void*)(&Tetro->ContentBuffers[0]), (void*)(&Tetro->Tetrominos[Tetro->Type]), sizeof(i8Vec2) * MAX_TETRO_SIZE);
+            SIMDMemoryCopy((void*)(&Tetro->ContentBuffers[1]), (void*)(&Tetro->ContentBuffers[0]), sizeof(i8Vec2) * MAX_TETRO_SIZE);
             
             // FIXME(annad): Here, when a new tetro spawns, 
             // you need to check the collide, and if there is 

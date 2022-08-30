@@ -44,3 +44,4 @@ inline b32 WellBlockIs(well *Well, block_state State, i16Vec2 Pos);
 inline b32 WellBlockIsFilled(well *Well, i16Vec2 Pos);
 
 #endif //WELL_H
+
