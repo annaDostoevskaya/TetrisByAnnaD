@@ -17,9 +17,10 @@ Description: <empty>
 #include "well.h"
 #include "tetro.h"
 
+#define CHR_BMP_SIZE 17
+
 struct game_state
 {
-    
 #if 0    
 #ifdef _GAME_INTERNAL
     // NOTE(annad): Just for test, see DEBUG_GetInfo()
@@ -43,7 +44,8 @@ struct game_state
     
     b8 BeepFlag;
     
-    u64 ChrBmp[17];
+    u64 ChrBmp[CHR_BMP_SIZE];
+    u64 ChrBmpSize;
 };
 
 #endif //GAME_H

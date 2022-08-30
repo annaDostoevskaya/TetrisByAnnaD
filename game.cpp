@@ -119,6 +119,7 @@ internal void PushCharBitmap(u64 *Storage, u64 StorageSize, u64 ChrBmp)
 {
     u64 Mask = 0xFF;
     u8 Chr = (u8)(ChrBmp & Mask);
+    // NOTE(annad): Thank you uncle Knuth...
     r64 Rem = Remainder(Chr * 0.6180339887, 1.0f);
     u64 BaseIndex = (u64)floor((r64)StorageSize * Rem);
     
@@ -140,6 +141,9 @@ internal void PushCharBitmap(u64 *Storage, u64 StorageSize, u64 ChrBmp)
             return;
         }
     }
+    
+    assert(1 != 1);
+    return;
 }
 
 #define CHAR_BITMAP_C 0xf08080808080f043
@@ -176,151 +180,8 @@ internal void DisplayString(game_state *State, game_screen_buffer *Buffer, const
             continue;
         }
         // 0.6180339887 (Knuth)
-        
         u64 ProxyChrBmp = GetCharBitmap(State->ChrBmp, 17, Symbol);
         CharBmp = (u8*)(&ProxyChrBmp);
-        
-        /*         
-                switch(Symbol)
-                {
-                    // [ 0x20, 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3a, 0x43, 0x44, 0x45, 0x4f, 0x52, 0x53 ]
-                    //   13    11    4     15    8     2     12    6     16    10    3     14    6     0     10    14    11    5
-                    // TODO(annad): Convert this arrays[8] to one u64 integer!!! and add hash map for accessing and get elements without switch!!!
-                    // Floor(18 * (k * 0.6180339887 % 1));
-                    case 'S': {
-                        // 0x53
-                        u64 S = CHAR_BITMAP_S;
-                        CharBmp = (u8*)(&S);
-                        break;
-                    }
-                    
-                    case 'C': {
-                        // 0x43
-                        u64 C = CHAR_BITMAP_C;
-                        CharBmp = (u8*)(&C);
-                        break;
-                    }
-                    
-                    case 'O': {
-                        // 0x4f
-                        u64 O = CHAR_BITMAP_O;
-                        CharBmp = (u8*)(&O);
-                        break;
-                    }
-                    
-                    case 'R': {
-                        // 0x52
-                        u64 R = CHAR_BITMAP_R;
-                        CharBmp = (u8*)(&R);
-                        break;
-                    }
-                    
-                    case 'E': {
-                        // 0x45
-                        u64 E = CHAR_BITMAP_E;
-                        CharBmp = (u8*)(&E);
-                        break;
-                    }
-                    
-                    case '1': {
-                        // 0x31
-                        u64 _1 = CHAR_BITMAP_1;
-                        CharBmp = (u8*)(&_1);
-                        break;
-                    }
-                    
-                    case '2': {
-                        // 0x32 
-                        u64 _2 = CHAR_BITMAP_2;
-                        CharBmp = (u8*)(&_2);
-                        break;
-                    }
-                    
-                    case '3': {
-                        // 0x33
-                        u64 _3 = CHAR_BITMAP_3;
-                        CharBmp = (u8*)(&_3);
-                        break;
-                    }
-                    
-                    case '4': {
-                        // 0x34
-                        u64 _4 = CHAR_BITMAP_4;
-                        CharBmp = (u8*)(&_4);
-                        break;
-                    }
-                    
-                    case '5': {
-                        // 0x35
-                        u64 _5 = CHAR_BITMAP_5;
-                        CharBmp = (u8*)(&_5);
-                        break;
-                    }
-                    
-                    case '6': {
-                        // 0x36
-                        u64 _6 = CHAR_BITMAP_6;
-                        CharBmp = (u8*)(&_6);
-                        break;
-                    }
-                    
-                    case '7': {
-                        // 0x37
-                        u64 _7 = CHAR_BITMAP_7;
-                        CharBmp = (u8*)(&_7);
-                        break;
-                    }
-                    
-                    case '8': {
-                        // 0x38
-                        u64 _8 = CHAR_BITMAP_8;
-                        CharBmp = (u8*)(&_8);
-                        break;
-                    }
-                    
-                    case '9': {
-                        // 0x39
-                        u64 _9 = CHAR_BITMAP_9;
-                        CharBmp = (u8*)(&_9);
-                        break;
-                    }
-                    
-                    case '0': {
-                        // 0x30
-                        u64 _0 = CHAR_BITMAP_0;
-                        CharBmp = (u8*)(&_0);
-                        break;
-                    }
-                    
-                    case ':': {
-                        // 0x3a
-                        u64 Colon = CHAR_BITMAP_COLON;
-                        CharBmp = (u8*)(&Colon);
-                        break;
-                    }
-                    
-                    case ' ': {
-                        // 0x20
-                        u64 Space = 0x0;
-                        CharBmp = (u8*)(&Space);
-                        break;
-                    }
-                    
-                    case 'D': {
-                        // 0x44
-                        u64 D = CHAR_BITMAP_D;
-                        CharBmp = (u8*)(&D);
-                        break;
-                    }
-                    
-                    default: {
-                        // 0x0
-                        u64 Default = 0x0;
-                        CharBmp = (u8*)(&Default);
-                        break;
-                    }
-                }
-                 */
         
         for(i8 j = 7; j > 0; j--)
         {
@@ -390,17 +251,10 @@ extern "C" GAME_UPDATE_SOUND_BUFFER(UpdateSoundBuffer)
     }
 }
 
-#define ZEROING_MEMORY(Mem, MemSize) \
-u8* _Memory = (u8*)Mem; \
-\
-for(i32 i = 0; i < MemSize; i++) \
-{ \
-_Memory[i] = 0; \
-}
-
 extern "C" GAME_UPDATE_AND_RENDER(UpdateAndRender)
 {
     assert(sizeof(game_state) < Memory->PermanentStorageSize);
+    __debugbreak();
     // NOTE(annad): Init.
     // NOTE(saiel): Objectively, this UB.
     game_state *State = (game_state *)Memory->PermanentStorage;
@@ -470,23 +324,24 @@ extern "C" GAME_UPDATE_AND_RENDER(UpdateAndRender)
         State->Initialized = true;
         State->Score = 0;
         
-        PushCharBitmap(State->ChrBmp, 17, CHAR_BITMAP_C);
-        PushCharBitmap(State->ChrBmp, 17, CHAR_BITMAP_D);
-        PushCharBitmap(State->ChrBmp, 17, CHAR_BITMAP_E);
-        PushCharBitmap(State->ChrBmp, 17, CHAR_BITMAP_O);
-        PushCharBitmap(State->ChrBmp, 17, CHAR_BITMAP_R);
-        PushCharBitmap(State->ChrBmp, 17, CHAR_BITMAP_S);
-        PushCharBitmap(State->ChrBmp, 17, CHAR_BITMAP_1);
-        PushCharBitmap(State->ChrBmp, 17, CHAR_BITMAP_2);
-        PushCharBitmap(State->ChrBmp, 17, CHAR_BITMAP_3);
-        PushCharBitmap(State->ChrBmp, 17, CHAR_BITMAP_4);
-        PushCharBitmap(State->ChrBmp, 17, CHAR_BITMAP_5);
-        PushCharBitmap(State->ChrBmp, 17, CHAR_BITMAP_6);
-        PushCharBitmap(State->ChrBmp, 17, CHAR_BITMAP_7);
-        PushCharBitmap(State->ChrBmp, 17, CHAR_BITMAP_8);
-        PushCharBitmap(State->ChrBmp, 17, CHAR_BITMAP_9);
-        PushCharBitmap(State->ChrBmp, 17, CHAR_BITMAP_0);
-        PushCharBitmap(State->ChrBmp, 17, CHAR_BITMAP_COLON);
+        State->ChrBmpSize = CHR_BMP_SIZE;
+        PushCharBitmap(State->ChrBmp, State->ChrBmpSize, CHAR_BITMAP_C);
+        PushCharBitmap(State->ChrBmp, State->ChrBmpSize, CHAR_BITMAP_D);
+        PushCharBitmap(State->ChrBmp, State->ChrBmpSize, CHAR_BITMAP_E);
+        PushCharBitmap(State->ChrBmp, State->ChrBmpSize, CHAR_BITMAP_O);
+        PushCharBitmap(State->ChrBmp, State->ChrBmpSize, CHAR_BITMAP_R);
+        PushCharBitmap(State->ChrBmp, State->ChrBmpSize, CHAR_BITMAP_S);
+        PushCharBitmap(State->ChrBmp, State->ChrBmpSize, CHAR_BITMAP_1);
+        PushCharBitmap(State->ChrBmp, State->ChrBmpSize, CHAR_BITMAP_2);
+        PushCharBitmap(State->ChrBmp, State->ChrBmpSize, CHAR_BITMAP_3);
+        PushCharBitmap(State->ChrBmp, State->ChrBmpSize, CHAR_BITMAP_4);
+        PushCharBitmap(State->ChrBmp, State->ChrBmpSize, CHAR_BITMAP_5);
+        PushCharBitmap(State->ChrBmp, State->ChrBmpSize, CHAR_BITMAP_6);
+        PushCharBitmap(State->ChrBmp, State->ChrBmpSize, CHAR_BITMAP_7);
+        PushCharBitmap(State->ChrBmp, State->ChrBmpSize, CHAR_BITMAP_8);
+        PushCharBitmap(State->ChrBmp, State->ChrBmpSize, CHAR_BITMAP_9);
+        PushCharBitmap(State->ChrBmp, State->ChrBmpSize, CHAR_BITMAP_0);
+        PushCharBitmap(State->ChrBmp, State->ChrBmpSize, CHAR_BITMAP_COLON);
     }
     
     // DEBUG_CheckWell(Well, Time);
@@ -659,7 +514,7 @@ extern "C" GAME_UPDATE_AND_RENDER(UpdateAndRender)
     
     IToStr(&State->StrBuffer[7], 9, State->Score);
     
-    /*     
+    /*
         u32 ScorePosX = (Buffer->Width / 2) / 3 - ((Buffer->Width / 2) / 6);
         u32 ScorePosY = Buffer->Height - (Buffer->Height / 3) + (Buffer->Height / 6);
          */
