@@ -17,36 +17,36 @@ Description: <empty>
 #include "sdl_game.h"
 #include "well.h"
 #include "tetro.h"
+#include "charbmp.h"
 
-#define CHR_BMP_SIZE 17
+#define STR_BUFFER_SIZE 16
+
+struct str_buf
+{
+    u8 Buf[STR_BUFFER_SIZE];
+    size_t Size;
+};
 
 struct game_state
 {
-#if 0    
-#ifdef _GAME_INTERNAL
-    // NOTE(annad): Just for test, see DEBUG_GetInfo()
-    bool stub;
-    b32 BoolState;
-#endif
-#endif
-    
     b16 Initialized;
-    b16 Pause;
-    b32 Fail;
+    b16 Fail;
     
     u32 MetaPixelSize;
+    
     well Well;
     tetro Tetro;
     
     u64 Score;
     u64 Record;
     
-    u8 StrBuffer[16];
-    
     b8 BeepFlag;
     
-    u64 ChrBmp[CHR_BMP_SIZE];
-    u64 ChrBmpSize;
+    char_bmp_buf CharBmps;
+    str_buf String;
+    
+    u64 SoundHz;
+    u64 SoundDur;
 };
 
 #endif //GAME_H

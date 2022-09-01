@@ -8,7 +8,7 @@ Description: <empty>
 
 #include "algs.h"
 
-void SIMDMemoryCopy(void *Dst, void *Src, size_t SrcSize)
+internal void SIMDMemoryCopy(void *Dst, void *Src, size_t SrcSize)
 {
     for(size_t i = 0; i < (SrcSize / 16); i++)
     {
@@ -20,7 +20,7 @@ void SIMDMemoryCopy(void *Dst, void *Src, size_t SrcSize)
     //
     //
     // NOTE(annad): We can use in this place __m64i or other and 
-    // copy for 8 bit per 1 opcode mb?.. 
+    // copy for 8 bytes per 1 opcode mb?.. 
     // It's make sense?..
     // 
     //
@@ -35,7 +35,7 @@ void SIMDMemoryCopy(void *Dst, void *Src, size_t SrcSize)
     }
 }
 
-internal void IToStr(u8 *StrBuf, u32 StrLength, u64 Integer)
+internal void UIToStr(u8 *StrBuf, u32 StrLength, u64 Integer)
 {
     for(i32 i = 0; i < StrLength; i++)
     {
@@ -46,7 +46,7 @@ internal void IToStr(u8 *StrBuf, u32 StrLength, u64 Integer)
     }
 }
 
-void AddressSwap(void **Addr1, void **Addr2)
+internal void AddressSwap(void **Addr1, void **Addr2)
 {
     void *temp = *Addr1;
     *Addr1 = *Addr2;

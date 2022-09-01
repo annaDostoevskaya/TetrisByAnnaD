@@ -9,7 +9,6 @@ Description: <empty>
 #ifndef TETRO_H
 #define TETRO_H
 
-
 enum tetro_state
 {
     TETRO_STATE_SPAWN = 0,
@@ -45,12 +44,10 @@ struct tetro
     tetro_type TypesBag[TETRO_TOTAL];
     u32 TypesBagSize;
     
-    // TODO(saiel): This can be two arrays, without pointers.
     i16Vec2 *Pos;
     i16Vec2 *ShadowPos;
     i16Vec2 PosBuffers[2];
     
-    // TODO(saiel): This can be two arrays, without pointers.
     i8Vec2 *Content;
     i8Vec2 *ShadowContent;
     i8Vec2 ContentBuffers[2][MAX_TETRO_SIZE];
@@ -70,7 +67,7 @@ b32 CheckCollideTetro(well *Well, i8Vec2 *TetroContent, i16Vec2 *TetroPos);
 void UpdateTetroPos(well *Well, tetro *Tetro);
 void UpdateTetroContent(well *Well, tetro *Tetro);
 
-// TODO(annad): I don't know for sure if this is part of the api or not?
+// TODO(annad): Yes, this is part API Tetro, and we must rewrite it for pass params and other
 void UpdateTetro(well *Well, tetro *Tetro, game_time *Time);
 
 #endif //TETRO_H

@@ -9,7 +9,6 @@ Description: <empty>
 #ifndef PLATFROM_GAME_H
 #define PLATFROM_GAME_H
 
-
 #include "base_types.h"
 
 #define PERMANENT_STORAGE_SIZE 4096

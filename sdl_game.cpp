@@ -6,8 +6,6 @@ Date: August 6th 2022 3:26 pm
 Description: <empty>
 */
 
-// TODO(annad): Sound!
-
 #ifdef _GAME_INTERNAL
 #ifdef _GAME_WIN32
 #include <windows.h>
@@ -33,6 +31,8 @@ void OutputDebugString(const char *) {}
 
 #define FREQ 44100
 #define SAMPLES 2048
+
+#include <stdio.h>
 
 void MixAudio(void *Udata, Uint8 *Stream, int StreamLen)
 {
@@ -92,15 +92,6 @@ int main(int Argc, char **Argv)
     // NOTE(annad): Event for quit.
     SDL_Event Event = {};
     
-    // NOTE(annad): Setup timer and frame rate.
-    u32 FrameRate = 30;
-    r32 MillisecondsPerFrame = (1000.0f/(float)FrameRate);
-    
-    game_time GameTime = {};
-    GameTime.BeginTime = SDL_GetTicks();
-    GameTime.EndTime = GameTime.BeginTime;
-    GameTime.dt = GameTime.EndTime - GameTime.BeginTime;
-    
     // NOTE(annad): Load game code.
     game Game = {};
     void *GameDLLHandle = SDL_LoadObject("./game.dll");
@@ -157,6 +148,15 @@ int main(int Argc, char **Argv)
     //
     // sdl_audio
     //
+    
+    // NOTE(annad): Setup timer and frame rate.
+    u32 FrameRate = 30;
+    r32 MillisecondsPerFrame = (1000.0f/(r32)FrameRate);
+    
+    game_time GameTime = {};
+    GameTime.BeginTime = SDL_GetTicks();
+    GameTime.EndTime = GameTime.BeginTime;
+    GameTime.dt = GameTime.EndTime - GameTime.BeginTime;
     
     b32 Run = true;
     while(Run)
@@ -243,25 +243,15 @@ int main(int Argc, char **Argv)
         // NOTE(annad): Timers.
         GameTime.EndTime = SDL_GetTicks();
         GameTime.dt = GameTime.EndTime - GameTime.BeginTime;
+        SDL_Delay(MillisecondsPerFrame - GameTime.dt);
         
-        // char Buffer[256];
         while((r32)GameTime.dt < MillisecondsPerFrame)
         {
-            // sprintf(Buffer, "WHILE GAMETIME DT: %d!\n", GameTime.dt);
-            // OutputDebugString(Buffer);
-            
-            // TODO(annad): Sleep and sleep resolution.
             GameTime.EndTime = SDL_GetTicks();
             GameTime.dt = GameTime.EndTime - GameTime.BeginTime;
         }
         
-        GameTime.dtSeconds = (float)GameTime.dt/1000.0f;
-        // r32 FPS = 1000.0f/(float)GameTime.dt;
-        
-        
-        // sprintf(Buffer, "%f FPS\n", FPS);
-        // OutputDebugString(Buffer);
-        
+        GameTime.dtSeconds = (r64)GameTime.dt/1000.0f;
         GameTime.BeginTime = GameTime.EndTime;
     }
     
