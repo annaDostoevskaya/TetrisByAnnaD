@@ -71,15 +71,20 @@ internal void PushCharBitmap(char_bmp_buf *CharBmps, u64 ChrBmp)
     }
     
     // NOTE(annad): There no free cells.
-    assert(1 != 1);
+    // DEV: assert(1 != 1);
     return;
 }
 
 
 internal void DisplayString(game_screen_buffer *Buffer, 
                             char_bmp_buf *CharBmps, str_buf *String,
-                            u32 MetaPixelSize, u32 X, u32 Y, u32 Size)
+                            r32 X, r32 Y, r32 Scale)
 {
+    
+    // DEV: assert(X >= 0 && X <= 1);
+    // DEV: assert(Y >= 0 && Y <= 1);
+    // DEV: assert(Scale >= 0 && Scale <= 1);
+    
     u8 *CharBmp = NULL;
     for(u8 i = 0; i < String->Size; i++)
     {
@@ -99,15 +104,14 @@ internal void DisplayString(game_screen_buffer *Buffer,
             {
                 if(CharBmp[j] & (1 << k))
                 {
+                    u32 Size = (Scale * Buffer->Height);
                     u32 LetterSpace = 8 * Size;
                     u32 LetterShift = i * LetterSpace;
-                    u32 BitShiftX = X - (k * Size);
-                    u32 BitShiftY = Y - (j * Size);
-                    u32 MetaPixel = (MetaPixelSize) / 7;
-                    u32 GlobalX = MetaPixel * (BitShiftX + LetterShift);
-                    u32 GlobalY = MetaPixel * (BitShiftY);
-                    
-                    DrawRectangle(Buffer, GlobalX, GlobalY, MetaPixel * Size, MetaPixel * Size, CHAR_COLOR, CHAR_COLOR, CHAR_COLOR);
+                    u32 BitShiftX = (Buffer->Width * X) - (k * Size);
+                    u32 BitShiftY = (Buffer->Height * Y) - (j * Size);
+                    u32 GlobalX = BitShiftX + LetterShift;
+                    u32 GlobalY = BitShiftY;
+                    DrawRectangle(Buffer, GlobalX, GlobalY, Size, Size, CHAR_COLOR, CHAR_COLOR, CHAR_COLOR);
                 }
             }
         }

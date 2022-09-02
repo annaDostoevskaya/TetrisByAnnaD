@@ -47,17 +47,5 @@ struct u32Vec2
     u32 Y;
 };
 
-//
-//
-//
-
-inline r64 Remainder(r64 Dividend, r64 Divisor);
-internal r64 Floor(r64 Arg);
-internal r64 Fact(u64 X);
-internal r64 Sin(r64 X);
-internal void MultiplyMatrices(i32 *M1, i32 *M2, 
-                               u32 RowsAndColumnSizeForM1AndM2,  // NOTE(annad): Rows size is Colum and Column size is Rows?... idk...
-                               u32 ColumnsSizeM1, u32 RowsSizeM2, i32 *Dest);
-
 #endif //MATH_H
 

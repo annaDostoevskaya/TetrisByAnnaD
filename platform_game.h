@@ -23,10 +23,10 @@ struct game_memory
 
 struct game_time 
 {
-    u32 BeginTime;
-    u32 EndTime;
-    u32 dt;
-    r32 dtSeconds;
+    u64 BeginTime;
+    u64 EndTime;
+    u64 dt;
+    r64 dtSeconds;
 };
 
 enum Keys 

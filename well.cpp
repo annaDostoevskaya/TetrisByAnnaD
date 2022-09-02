@@ -79,9 +79,9 @@ internal void RenderWell(game_screen_buffer *Buffer, well *Well)
 
 inline void SetWellBlockState(well *Well, block_state State, i16Vec2 Pos)
 {
-    assert(Pos.X < Well->Width);
-    assert(Pos.Y < Well->Height);
-    assert(Pos.X >= 0 && Pos.Y >= 0);
+    // DEV: assert(Pos.X < Well->Width);
+    // DEV: assert(Pos.Y < Well->Height);
+    // DEV: assert(Pos.X >= 0 && Pos.Y >= 0);
     
     Pos.Y = Well->Height - Pos.Y - 1;
     Well->Field[Pos.Y * Well->Width + Pos.X] = State;
@@ -89,9 +89,9 @@ inline void SetWellBlockState(well *Well, block_state State, i16Vec2 Pos)
 
 inline b32 WellBlockIs(well *Well, block_state State, i16Vec2 Pos)
 {
-    assert(Pos.X < Well->Width);
-    assert(Pos.Y < Well->Height);
-    assert(Pos.X >= 0 && Pos.Y >= 0);
+    // DEV: assert(Pos.X < Well->Width);
+    // DEV: assert(Pos.Y < Well->Height);
+    // DEV: assert(Pos.X >= 0 && Pos.Y >= 0);
     
     Pos.Y = Well->Height - Pos.Y - 1;
     return Well->Field[Pos.Y * Well->Width + Pos.X] == State;

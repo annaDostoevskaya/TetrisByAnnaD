@@ -7,7 +7,6 @@ Description: <empty>
 */
 
 #include "tetro.h"
-#include "mmath.h"
 
 #include <time.h>
 #include <stdlib.h>
@@ -26,8 +25,8 @@ internal void InitTetro(tetro *Tetro)
         {{-1, 0}, {0, 0}, {1, 0}, {2, 0}} // I
     };
     
-    static_assert(sizeof(DefaultTetrominos) == (SIZEOF_TETRO_BLOCK * MAX_TETRO_SIZE * TETRO_TOTAL));
-    static_assert(sizeof(Tetro->Tetrominos) == sizeof(DefaultTetrominos));
+    // DEV: static_assert(sizeof(DefaultTetrominos) == (SIZEOF_TETRO_BLOCK * MAX_TETRO_SIZE * TETRO_TOTAL));
+    // DEV: static_assert(sizeof(Tetro->Tetrominos) == sizeof(DefaultTetrominos));
     SIMDMemoryCopy((void*)(&Tetro->Tetrominos), (void*)(&DefaultTetrominos), sizeof(DefaultTetrominos));
     
     Tetro->Content = (i8Vec2*)(&Tetro->ContentBuffers[0]);
@@ -44,7 +43,7 @@ internal void InitTetro(tetro *Tetro)
         TETRO_J, TETRO_Z, TETRO_S, TETRO_I,
     };
     
-    static_assert(sizeof(Tetro->TypesBag) == sizeof(TypesBag));
+    // DEV: static_assert(sizeof(Tetro->TypesBag) == sizeof(TypesBag)); 
     SIMDMemoryCopy((void*)(&Tetro->TypesBag), (void*)(&TypesBag), sizeof(TypesBag));
     Tetro->TypesBagSize = TETRO_TOTAL;
 }
@@ -73,7 +72,7 @@ internal tetro_type GetRandmonTetro(tetro_type *TetroTypesBag, u32 *TetroTypesBa
     return RandomType;
 }
 
-internal void ChangeStateBlocksTetro(well *Well, block_state BlockState, i8Vec2 *TetroContent, i16Vec2 *TetroPos)
+internal void ChangeStateBlocksTetro(well *Well, block_state BlockState, i8Vec2 *TetroContent, i8Vec2 *TetroPos)
 {
     for(u32 i = 0; i < MAX_TETRO_SIZE; i++)
     {
@@ -85,48 +84,29 @@ internal void ChangeStateBlocksTetro(well *Well, block_state BlockState, i8Vec2 
     }
 }
 
-internal void DrawTetro(well *Well, i8Vec2 *TetroContent, i16Vec2 *TetroPos)
+internal void DrawTetro(well *Well, i8Vec2 *TetroContent, i8Vec2 *TetroPos)
 {
     ChangeStateBlocksTetro(Well, BLOCK_STATE_TETRO, TetroContent, TetroPos);
 }
 
-internal void RemoveTetro(well *Well, i8Vec2 *TetroContent, i16Vec2 *TetroPos)
+internal void RemoveTetro(well *Well, i8Vec2 *TetroContent, i8Vec2 *TetroPos)
 {
     ChangeStateBlocksTetro(Well, BLOCK_STATE_EMPTY, TetroContent, TetroPos);
 }
 
-internal void DropTetro(well *Well, i8Vec2 *TetroContent, i16Vec2 *TetroPos)
+internal void DropTetro(well *Well, i8Vec2 *TetroContent, i8Vec2 *TetroPos)
 {
     ChangeStateBlocksTetro(Well, BLOCK_STATE_FILLED, TetroContent, TetroPos);
 }
 
-internal void MoveTetro(well *Well, i16Vec2 *TetroPos, i8Vec2 MoveVector)
+internal void MoveTetro(well *Well, i8Vec2 *TetroPos, i8Vec2 MoveVector)
 {
-    i32 Position[1][3] = {
-        {TetroPos->X, TetroPos->Y, 1}
-    };
-    
-    i32 TranstionMatrix[3][3] = {
-        {1, 0, 0},
-        {0, 1, 0},
-        {MoveVector.X, MoveVector.Y, 1}
-    };
-    
-    i32 Result[1][3] = {};
-    
-    MultiplyMatrices((i32*)Position, (i32*)TranstionMatrix, 3, 1, 3, (i32*)Result);
-    
-    TetroPos->X = (u16)Result[0][0];
-    TetroPos->Y = (u16)Result[0][1];
+    TetroPos->X += MoveVector.X;
+    TetroPos->Y += MoveVector.Y;
 }
 
-internal void RotateTetro(well *Well, i8Vec2 *TetroContent)
+internal void RotateTetro(well *Well, i8Vec2 *TetroContent, i32 *RotateMatrix)
 {
-    i32 RotateMatrix[2][2] = {
-        {0, -1},
-        {1, 0}
-    };
-    
     i32 Result[1][2] = {};
     
     for(u32 i = 0; i < MAX_TETRO_SIZE; i++)
@@ -137,14 +117,14 @@ internal void RotateTetro(well *Well, i8Vec2 *TetroContent)
             {CurrentPart->X, CurrentPart->Y}
         };
         
-        MultiplyMatrices((i32*)Position, (i32*)RotateMatrix, 2, 1, 2, (i32*)Result);
+        MultiplyMatrices((i32*)Position, (i32*)RotateMatrix, 2, 2, 1, (i32*)Result);
         
         CurrentPart->X = (i8)Result[0][0];
         CurrentPart->Y = (i8)Result[0][1];
     }
 }
 
-internal b32 CheckCollideTetro(well *Well, i8Vec2 *TetroContent, i16Vec2 *TetroPos)
+internal b32 CheckCollideTetro(well *Well, i8Vec2 *TetroContent, i8Vec2 *TetroPos)
 {
     for(u32 i = 0; i < MAX_TETRO_SIZE; i++)
     {
@@ -177,12 +157,16 @@ internal void UpdateTetroContent(well *Well, tetro *Tetro)
     DrawTetro(Well, Tetro->Content, Tetro->Pos);
 }
 
-internal void UpdateTetro(game_state *State, well *Well, tetro *Tetro, game_time *Time)
+internal void UpdateTetro(game_state *State, u64 deltaTime)
 {
+    tetro *Tetro = &(State->Tetro);
+    well *Well = &(State->Well);
+    midi *Midi = &(State->Midi);
+    
     // NOTE(saiel): Move this to top.
     if(Tetro->AccumTime < Tetro->DownTime)
     {
-        Tetro->AccumTime += Time->dt;
+        Tetro->AccumTime += deltaTime;
         return;
     }
     
@@ -192,7 +176,7 @@ internal void UpdateTetro(game_state *State, well *Well, tetro *Tetro, game_time
     {
         case TETRO_STATE_SPAWN:
         {
-            State->Score = State->Score + MAX_TETRO_SIZE;
+            State->Score += MAX_TETRO_SIZE;
             
             Tetro->Pos->X = Tetro->ShadowPos->X = Well->Width / 2;
             Tetro->Pos->Y = Tetro->ShadowPos->Y = Well->Height - 1;
@@ -217,7 +201,7 @@ internal void UpdateTetro(game_state *State, well *Well, tetro *Tetro, game_time
         
         case TETRO_STATE_IN_PROGRESS:
         {
-            assert(Tetro->Pos->Y >= 0);
+            // DEV: assert(Tetro->Pos->Y >= 0);
             
             i8Vec2 MoveVector = {0, -1};
             *Tetro->ShadowPos = *Tetro->Pos;
@@ -237,7 +221,9 @@ internal void UpdateTetro(game_state *State, well *Well, tetro *Tetro, game_time
         case TETRO_STATE_FALL:
         {
             // NOTE(annad): audio
-            State->BeepFlag = true;
+            Midi->Hz = 450;
+            Midi->Duration = 25;
+            Midi->Volume = 0.5f;
             
             DropTetro(Well, Tetro->Content, Tetro->Pos);
             Tetro->State = TETRO_STATE_SPAWN;

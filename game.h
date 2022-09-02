@@ -11,7 +11,6 @@ Description: <empty>
 
 #include "platform_game.h"
 
-#include "algs.h"
 #include "mmath.h"
 #include "base_types.h"
 #include "sdl_game.h"
@@ -19,12 +18,28 @@ Description: <empty>
 #include "tetro.h"
 #include "charbmp.h"
 
+//
+// string.h
+//
+
 #define STR_BUFFER_SIZE 16
 
 struct str_buf
 {
     u8 Buf[STR_BUFFER_SIZE];
     size_t Size;
+};
+
+//
+// string.h
+//
+
+struct midi
+{
+    i64 Hz;
+    r64 HzAccum;
+    i64 Duration;
+    r32 Volume;
 };
 
 struct game_state
@@ -45,8 +60,7 @@ struct game_state
     char_bmp_buf CharBmps;
     str_buf String;
     
-    u64 SoundHz;
-    u64 SoundDur;
+    midi Midi;
 };
 
 #endif //GAME_H

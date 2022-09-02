@@ -10,6 +10,13 @@ Description: <empty>
 
 #define MMATH_PI 3.14159265359
 
+inline r64 Remainder(r64 Dividend, r64 Divisor)
+{
+    r64 Result = Dividend - ((r64)(i64)(Dividend / Divisor)) * Divisor;
+    
+    return Result;
+}
+
 internal r64 Fact(u64 X)
 {
     r64 Result = 1.0f;
@@ -55,30 +62,20 @@ internal r64 Floor(r64 Arg)
     return Result;
 }
 
-
-inline r64 Remainder(r64 Dividend, r64 Divisor)
+internal void MultiplyMatrices(i32 *A, i32 *B, 
+                               u32 CommonSize, u32 WidthB, u32 HeightA, 
+                               i32 *Dest)
 {
-    r64 Result = Dividend - ((r64)(i64)(Dividend / Divisor)) * Divisor;
-    
-    return Result;
-}
-
-
-internal void MultiplyMatrices(i32 *M1, i32 *M2, 
-                               u32 RowsAndColumnSizeForM1AndM2,  // NOTE(annad): Rows size is Colum and Column size is Rows?... idk...
-                               u32 ColumnsSizeM1, u32 RowsSizeM2, i32 *Dest)
-{
-    // TODO(annad): We must rewrite it.
-    for(u32 i = 0; i < ColumnsSizeM1; i++)
+    for(u32 Y = 0; Y < HeightA; Y++)
     {
-        for(u32 j = 0; j < RowsSizeM2; j++)
+        for(u32 X = 0; X < WidthB; X++)
         {
-            Dest[i * RowsSizeM2 + j] = 0;
-            for(u32 k = 0; k < RowsAndColumnSizeForM1AndM2; k++)
+            Dest[Y * WidthB + X] = 0;
+            for(u32 i = 0; i < CommonSize; i++)
             {
-                Dest[i * RowsSizeM2 + j] += (M1[i * RowsAndColumnSizeForM1AndM2 + k] * 
-                                             M2[k * RowsAndColumnSizeForM1AndM2 + j]);
+                Dest[Y * WidthB + X] += A[Y * CommonSize + i] * B[i * WidthB + X];
             }
         }
     }
 }
+

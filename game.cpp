@@ -7,7 +7,7 @@ Description: <empty>
 */
 
 #include "game.h"
-#include <assert.h>
+// DEV: #include <assert.h>
 
 // NOTE(annad): We need to define a header protocol
 
@@ -57,60 +57,48 @@ internal void DrawRectangle(game_screen_buffer *Buffer,
 // draw.cpp
 //
 
-#include "well.cpp"
-#include "tetro.cpp"
-#include "charbmp.cpp"
-
 // NOTE(annad): Maybe we must remove this and use stdlib of C?.. idk...
 #include "mmath.cpp"
 #include "algs.cpp"
 
-globalv r64 V = 0;
-globalv i32 GI = 0;
-globalv i32 hz = 450;
+#include "well.cpp"
+#include "tetro.cpp"
+#include "charbmp.cpp"
 
-// TODO(annd): AUDIO, rafactoring,???????
 extern "C" GAME_UPDATE_SOUND_BUFFER(UpdateSoundBuffer)
 {
-    assert(sizeof(game_state) < Memory->PermanentStorageSize);
+    // DEV: assert(sizeof(game_state) < Memory->PermanentStorageSize);
     game_state *State = (game_state *)Memory->PermanentStorage;
+    midi *Midi = &(State->Midi);
     
-    if(State->BeepFlag)
+    if(Midi->Duration > 0)
     {
-        if(GI == SoundBuffer->StreamLen)
+        for(i32 i = 0; i < SoundBuffer->StreamLen; i++)
         {
-            GI = 0;
+            r64 CycleFreq = 2 * MMATH_PI / SoundBuffer->Frequency;
+            SoundBuffer->Stream[i] = (i16)(((r32)MAX_I16_VALUE * Midi->Volume) * Sin(CycleFreq * Midi->HzAccum));
+            Midi->HzAccum += Midi->Hz;
         }
         
-        while(GI < SoundBuffer->StreamLen)
-        {
-            SoundBuffer->Stream[GI] = (i16)(10000.0f * Sin(V * 2 * MMATH_PI / SoundBuffer->Frequency));
-            V += hz; // NOTE(annad): find out what omega (V = w) means in harmonic vibrations
-            GI++;
-        }
-        
-        State->BeepFlag = false;
+        Midi->Duration -= (1 / (r64)(SoundBuffer->Frequency / SoundBuffer->StreamLen) * 1000);
     }
-    else 
+    else
     {
-        if(GI == SoundBuffer->StreamLen)
+        for(i32 i = 0; i < SoundBuffer->StreamLen; i++)
         {
-            GI = 0;
+            SoundBuffer->Stream[i] = 0;
         }
-        
-        while(GI < SoundBuffer->StreamLen)
-        {
-            SoundBuffer->Stream[GI] = 0;
-            V += hz;
-            GI++;
-        }
+    }
+    
+    if(Midi->Duration < 0)
+    {
+        Midi->HzAccum = 0;
     }
 }
 
-
 extern "C" GAME_UPDATE_AND_RENDER(UpdateAndRender)
 {
-    assert(sizeof(game_state) < Memory->PermanentStorageSize);
+    // DEV: assert(sizeof(game_state) < Memory->PermanentStorageSize);
     
     // NOTE(annad): Init.
     // NOTE(saiel): Objectively, this UB.
@@ -175,12 +163,13 @@ extern "C" GAME_UPDATE_AND_RENDER(UpdateAndRender)
         State->Fail = false;
     }
     
-    UpdateTetro(State, Well, Tetro, Time);
+    UpdateTetro(State, Time->dt);
     UpdateWell(Well);
     RenderWell(Buffer, Well);
     
     {
-        // update wat?... update fidback?..
+        // NOTE(annad): Update Input.
+        // We check for collision because the Tetrimino update happens every 500 milliseconds.
         if(!CheckCollideTetro(Well, Tetro->Content, Tetro->Pos) && Tetro->State == TETRO_STATE_IN_PROGRESS)
         {
             if(Input->PressedKey != KEY_NOTHING)
@@ -189,36 +178,33 @@ extern "C" GAME_UPDATE_AND_RENDER(UpdateAndRender)
                 {
                     if(Tetro->Type != TETRO_O) // NOTE(annad): Absolutely legal crutch.
                     {
-                        // NOTE(annad): Input handling.
+                        // DEV: static_assert(sizeof(Tetro->ShadowContent) == sizeof(Tetro->Content));
+                        // DEV: static_assert(sizeof(Tetro->ShadowContent) == SIZEOF_TETRO_BLOCK * MAX_TETRO_SIZE);
+                        SIMDMemoryCopy((void*)Tetro->ShadowContent, (void*)Tetro->Content, SIZEOF_TETRO_BLOCK * MAX_TETRO_SIZE);
+                        i32 *RotateMatrix = NULL;
+                        
                         if(Input->PressedKey == KEY_ROTATE_RIGHT)
                         {
-                            static_assert(sizeof(Tetro->ShadowContent) == sizeof(Tetro->Content));
-                            static_assert(sizeof(Tetro->ShadowContent) == SIZEOF_TETRO_BLOCK * MAX_TETRO_SIZE);
-                            SIMDMemoryCopy((void*)Tetro->ShadowContent, (void*)Tetro->Content, SIZEOF_TETRO_BLOCK * MAX_TETRO_SIZE);
-                            RotateTetro(Well, Tetro->ShadowContent);
-                            if(!CheckCollideTetro(Well, Tetro->ShadowContent, Tetro->Pos))
-                            {
-                                UpdateTetroContent(Well, Tetro);
-                            }
+                            i32 RightRotateMatrix[2][2] = {{0, 1}, {-1, 0}};
+                            RotateMatrix = (i32*)(&RightRotateMatrix);
                         }
-                        else if(Input->PressedKey == KEY_ROTATE_LEFT)
+                        else
                         {
-                            // TODO(annad): Rotate left, matrix rotation!
-                            static_assert(sizeof(Tetro->ShadowContent) == sizeof(Tetro->Content));
-                            static_assert(sizeof(Tetro->ShadowContent) == SIZEOF_TETRO_BLOCK * MAX_TETRO_SIZE);
-                            SIMDMemoryCopy((void*)Tetro->ShadowContent, (void*)Tetro->Content, SIZEOF_TETRO_BLOCK * MAX_TETRO_SIZE);
-                            RotateTetro(Well, Tetro->ShadowContent);
-                            if(!CheckCollideTetro(Well, Tetro->ShadowContent, Tetro->Pos))
-                            {
-                                UpdateTetroContent(Well, Tetro);
-                            }
+                            i32 LeftRotateMatrix[2][2] = {{0, -1},{1, 0}};
+                            RotateMatrix = (i32*)(&LeftRotateMatrix);
                         }
+                        
+                        RotateTetro(Well, Tetro->ShadowContent, (RotateMatrix));
+                        if(!CheckCollideTetro(Well, Tetro->ShadowContent, Tetro->Pos))
+                        {
+                            UpdateTetroContent(Well, Tetro);
+                        }
+                        
                     }
                 }
                 else
                 {
                     i8Vec2 MoveVector = {0, 0};
-                    
                     if(Input->PressedKey == KEY_MOVE_DOWN)
                     {
                         MoveVector = {0, -1};
@@ -243,29 +229,20 @@ extern "C" GAME_UPDATE_AND_RENDER(UpdateAndRender)
         }
     }
     
-    /*
-     TODO(annad): Font...
-In fact, it was at this moment that I realized that it was necessary 
-to use a value in the range from 0 to 1 to position elements on the screen. 
-Let's assume that this part of the system was written 
-in those days when there was no FPU.
-*/
-    u32 FontPixel = (State->MetaPixelSize) / 7; // 2
-    u32 MetaFontWidth = Buffer->Width / FontPixel;
-    u32 MetaFontHeight = Buffer->Height / FontPixel;
-    
     // NOTE(annad): Print Score
     SIMDMemoryCopy((void*)String->Buf, (void*)"SCORE: ", 7);
     UIToStr(&(String->Buf[7]), 9, State->Score);
-    u32 ScorePosX = (MetaFontWidth / 2) / 3 - ((MetaFontWidth / 2) / 6);
-    u32 ScorePosY = MetaFontHeight - (MetaFontHeight / 3) + (MetaFontHeight / 6);
-    DisplayString(Buffer, CharBmpBuf, String, State->MetaPixelSize, ScorePosX, ScorePosY, 2);
+    r32 ScorePosX = ((r32)(Buffer->Width / 12) / (r32)Buffer->Width);
+    r32 ScorePosY = ((r32)(Buffer->Height - Buffer->Height / 5) / (r32)Buffer->Height);
+    r32 Scale = 0.004;
+    DisplayString(Buffer, CharBmpBuf, String, ScorePosX, ScorePosY, Scale);
     
     // NOTE(annad): Print Record
     SIMDMemoryCopy((void*)String->Buf, (void*)"RECORD: ", 7);
     UIToStr(&(String->Buf[7]), 9, State->Record);
-    u32 RecordPosX = (MetaFontWidth / 2) / 3 - ((MetaFontWidth / 2) / 6);
-    u32 RecordPosY = MetaFontHeight - (MetaFontHeight / 3) + (MetaFontHeight / 8);
-    DisplayString(Buffer, CharBmpBuf, String, State->MetaPixelSize, RecordPosX, RecordPosY, 2);
+    r32 RecordPosX = ((r32)(Buffer->Width / 12) / (r32)Buffer->Width);
+    r32 RecordPosY = ((r32)(Buffer->Height - Buffer->Height / 4) / (r32)Buffer->Height);
+    
+    DisplayString(Buffer, CharBmpBuf, String, RecordPosX, RecordPosY, Scale);
 }
 

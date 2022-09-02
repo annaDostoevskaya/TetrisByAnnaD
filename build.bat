@@ -2,11 +2,12 @@
 
 utils\ctime.exe -begin tetris.ctm
 
-REM REMOVE THIS !!! -wd4311 -wd4302 !!! FROM OPTS
+@REM REMOVE THIS !!! -wd4311 -wd4302 !!! FROM OPTS
 set opts_dev=-D_GAME_INTERNAL
-REM set opts=-FC -GR- -EHa- -nologo -Zi -Wall -WX -W3 -wd4018 -wd5045 -wd4996 -wd4311 -wd4302  %opts_dev% -D_GAME_WIN32
+@REM set opts=-FC -GR- -EHa- -nologo -Zi -Wall -WX -W3 -wd4018 -wd5045 -wd4996 -wd4311 -wd4302  %opts_dev% -D_GAME_WIN32
 
-set opts=-FC -GR- -EHa- -nologo -Zi %opts_dev% -D_GAME_WIN32
+@REM set optimization_flags=-O2 -Ox -Ob2
+set opts=-FC -GR- -EHa- -nologo -Zi %opts_dev% -D_GAME_WIN32 
 
 set code=%cd%
 set lib_path=%code%\thirdparty\libs

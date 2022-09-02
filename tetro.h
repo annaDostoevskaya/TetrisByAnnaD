@@ -44,9 +44,9 @@ struct tetro
     tetro_type TypesBag[TETRO_TOTAL];
     u32 TypesBagSize;
     
-    i16Vec2 *Pos;
-    i16Vec2 *ShadowPos;
-    i16Vec2 PosBuffers[2];
+    i8Vec2 *Pos;
+    i8Vec2 *ShadowPos;
+    i8Vec2 PosBuffers[2];
     
     i8Vec2 *Content;
     i8Vec2 *ShadowContent;
@@ -55,20 +55,6 @@ struct tetro
     u32 DownTime;
     u32 AccumTime;
 };
-
-void DrawTetro(well *Well, i8Vec2 *TetroContent, i16Vec2 *TetroPos);
-void RemoveTetro(well *Well, i8Vec2 *TetroContent, i16Vec2 *TetroPos);
-void DropTetro(well *Well, i8Vec2 *TetroContent, i16Vec2 *TetroPos);
-
-void MoveTetro(well *Well, i16Vec2 *TetroPos, i8Vec2 MoveVector);
-void RotateTetro(well *Well, i8Vec2 *TetroContent);
-b32 CheckCollideTetro(well *Well, i8Vec2 *TetroContent, i16Vec2 *TetroPos);
-
-void UpdateTetroPos(well *Well, tetro *Tetro);
-void UpdateTetroContent(well *Well, tetro *Tetro);
-
-// TODO(annad): Yes, this is part API Tetro, and we must rewrite it for pass params and other
-void UpdateTetro(well *Well, tetro *Tetro, game_time *Time);
 
 #endif //TETRO_H
 

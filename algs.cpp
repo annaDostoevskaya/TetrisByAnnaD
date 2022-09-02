@@ -6,7 +6,8 @@ Date: August 30th 2022 11:19 pm
 Description: <empty>
 */
 
-#include "algs.h"
+#include "base_types.h"
+#include <emmintrin.h> // NOTE(annad): Idk, it's processor or compiler dependecy?..
 
 internal void SIMDMemoryCopy(void *Dst, void *Src, size_t SrcSize)
 {

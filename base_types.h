@@ -11,6 +11,8 @@ Description: <empty>
 
 #include <stdint.h>
 
+#define MAX_I16_VALUE 32768
+
 typedef uint64_t u64;
 typedef uint32_t u32;
 typedef uint16_t u16;
