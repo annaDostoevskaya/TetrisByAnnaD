@@ -1,12 +1,12 @@
 /* 
 Author: github.com/annadostoevskaya
-File: well.cpp
+File: game_well.cpp
 Date: August 13th 2022 10:49 pm 
 
 Description: <empty>
 */
 
-#include "well.h"
+#include "game_well.h"
 
 #define BORDER_COLOR 0.93f
 #define INTERNAL_FIELD_COLOR 0.0f

@@ -14,9 +14,9 @@ Description: <empty>
 #include "mmath.h"
 #include "base_types.h"
 #include "sdl_game.h"
-#include "well.h"
-#include "tetro.h"
-#include "charbmp.h"
+#include "game_well.h"
+#include "game_tetro.h"
+#include "game_charbmp.h"
 
 //
 // string.h

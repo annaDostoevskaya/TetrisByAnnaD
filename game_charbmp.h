@@ -1,6 +1,6 @@
 /* 
 Author: github.com/annadostoevskaya
-File: charbmp.h
+File: game_charbmp.h
 Date: September 1st 2022 8:47 pm 
 
 Description: <empty>

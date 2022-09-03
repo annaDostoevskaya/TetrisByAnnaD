@@ -61,9 +61,9 @@ internal void DrawRectangle(game_screen_buffer *Buffer,
 #include "mmath.cpp"
 #include "algs.cpp"
 
-#include "well.cpp"
-#include "tetro.cpp"
-#include "charbmp.cpp"
+#include "game_well.cpp"
+#include "game_tetro.cpp"
+#include "game_charbmp.cpp"
 
 extern "C" GAME_UPDATE_SOUND_BUFFER(UpdateSoundBuffer)
 {

@@ -1,12 +1,12 @@
 /* 
 Author: github.com/annadostoevskaya
-File: tetro.cpp
+File: game_tetro.cpp
 Date: August 20th 2022 0:48 am 
 
 Description: <empty>
 */
 
-#include "tetro.h"
+#include "game_tetro.h"
 
 #include <time.h>
 #include <stdlib.h>

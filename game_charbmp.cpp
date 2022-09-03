@@ -1,12 +1,12 @@
 /* 
 Author: github.com/annadostoevskaya
-File: charbmp.cpp
+File: game_charbmp.cpp
 Date: September 1st 2022 8:44 pm 
 
 Description: <empty>
 */
 
-#include "charbmp.h"
+#include "game_charbmp.h"
 
 internal u64 GetChrBmpHash(size_t BufSize, u8 Char)
 {

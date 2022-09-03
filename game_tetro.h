@@ -1,6 +1,6 @@
 /* 
 Author: github.com/annadostoevskaya
-File: tetro.h
+File: game_tetro.h
 Date: August 20th 2022 0:48 am 
 
 Description: <empty>
