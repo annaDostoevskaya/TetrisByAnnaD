@@ -104,11 +104,11 @@ internal void DisplayString(game_screen_buffer *Buffer,
             {
                 if(CharBmp[j] & (1 << k))
                 {
-                    u32 Size = (Scale * Buffer->Height);
+                    u32 Size = (u32)(Scale * (r32)Buffer->Height);
                     u32 LetterSpace = 8 * Size;
                     u32 LetterShift = i * LetterSpace;
-                    u32 BitShiftX = (Buffer->Width * X) - (k * Size);
-                    u32 BitShiftY = (Buffer->Height * Y) - (j * Size);
+                    u32 BitShiftX = (u32)((r32)Buffer->Width * X) - (k * Size);
+                    u32 BitShiftY = (u32)((r32)Buffer->Height * Y) - (j * Size);
                     u32 GlobalX = BitShiftX + LetterShift;
                     u32 GlobalY = BitShiftY;
                     DrawRectangle(Buffer, GlobalX, GlobalY, Size, Size, CHAR_COLOR, CHAR_COLOR, CHAR_COLOR);

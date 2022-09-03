@@ -30,6 +30,9 @@ typedef u32 b32;
 typedef u16 b16;
 typedef bool b8;
 
+// NOTE(annad): On linux systems, size_t undefined.
+typedef u64 size_t;
+
 #define internal static
 #define globalv static
 #define localv static

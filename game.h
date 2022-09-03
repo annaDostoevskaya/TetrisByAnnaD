@@ -37,7 +37,7 @@ struct str_buf
 struct midi
 {
     i64 Hz;
-    r64 HzAccum;
+    i64 HzAccum;
     i64 Duration;
     r32 Volume;
 };
@@ -49,13 +49,11 @@ struct game_state
     
     u32 MetaPixelSize;
     
-    well Well;
-    tetro Tetro;
-    
     u64 Score;
     u64 Record;
     
-    b8 BeepFlag;
+    well Well;
+    tetro Tetro;
     
     char_bmp_buf CharBmps;
     str_buf String;

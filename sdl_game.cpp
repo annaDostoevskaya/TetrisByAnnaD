@@ -156,7 +156,7 @@ int main(int Argc, char **Argv)
     game_time GameTime = {};
     GameTime.BeginTime = SDL_GetTicks();
     GameTime.EndTime = GameTime.BeginTime;
-    GameTime.dt = GameTime.EndTime - GameTime.BeginTime;
+    GameTime.dt = (u32)(GameTime.EndTime - GameTime.BeginTime);
     
     b32 Run = true;
     while(Run)
@@ -242,16 +242,16 @@ int main(int Argc, char **Argv)
         
         // NOTE(annad): Timers.
         GameTime.EndTime = SDL_GetTicks();
-        GameTime.dt = GameTime.EndTime - GameTime.BeginTime;
-        SDL_Delay(MillisecondsPerFrame - GameTime.dt);
+        GameTime.dt = (u32)(GameTime.EndTime - GameTime.BeginTime);
+        SDL_Delay((Uint32)(MillisecondsPerFrame - (r32)GameTime.dt));
         
         while((r32)GameTime.dt < MillisecondsPerFrame)
         {
             GameTime.EndTime = SDL_GetTicks();
-            GameTime.dt = GameTime.EndTime - GameTime.BeginTime;
+            GameTime.dt = (u32)(GameTime.EndTime - GameTime.BeginTime);
         }
         
-        GameTime.dtSeconds = (r64)GameTime.dt/1000.0f;
+        GameTime.dtSeconds = (r32)GameTime.dt / 1000.0f;
         GameTime.BeginTime = GameTime.EndTime;
     }
     

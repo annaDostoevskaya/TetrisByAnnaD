@@ -17,7 +17,6 @@ struct game_memory
 {
     u8 PermanentStorage[PERMANENT_STORAGE_SIZE]; // NOTE(annad): We have to fit in 4KB
     u64 PermanentStorageSize;
-    
     b32 Run;
 };
 
@@ -25,8 +24,8 @@ struct game_time
 {
     u64 BeginTime;
     u64 EndTime;
-    u64 dt;
-    r64 dtSeconds;
+    u32 dt;
+    r32 dtSeconds;
 };
 
 enum Keys 

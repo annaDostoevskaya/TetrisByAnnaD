@@ -76,11 +76,11 @@ extern "C" GAME_UPDATE_SOUND_BUFFER(UpdateSoundBuffer)
         for(i32 i = 0; i < SoundBuffer->StreamLen; i++)
         {
             r64 CycleFreq = 2 * MMATH_PI / SoundBuffer->Frequency;
-            SoundBuffer->Stream[i] = (i16)(((r32)MAX_I16_VALUE * Midi->Volume) * Sin(CycleFreq * Midi->HzAccum));
+            SoundBuffer->Stream[i] = (i16)(((r32)MAX_I16_VALUE * Midi->Volume) * Sin(CycleFreq * (r64)Midi->HzAccum));
             Midi->HzAccum += Midi->Hz;
         }
         
-        Midi->Duration -= (1 / (r64)(SoundBuffer->Frequency / SoundBuffer->StreamLen) * 1000);
+        Midi->Duration -= (i64)(1 / (r64)(SoundBuffer->Frequency / (r64)SoundBuffer->StreamLen) * 1000.0f);
     }
     else
     {
@@ -234,7 +234,7 @@ extern "C" GAME_UPDATE_AND_RENDER(UpdateAndRender)
     UIToStr(&(String->Buf[7]), 9, State->Score);
     r32 ScorePosX = ((r32)(Buffer->Width / 12) / (r32)Buffer->Width);
     r32 ScorePosY = ((r32)(Buffer->Height - Buffer->Height / 5) / (r32)Buffer->Height);
-    r32 Scale = 0.004;
+    r32 Scale = 0.004f;
     DisplayString(Buffer, CharBmpBuf, String, ScorePosX, ScorePosY, Scale);
     
     // NOTE(annad): Print Record

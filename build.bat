@@ -2,12 +2,10 @@
 
 utils\ctime.exe -begin tetris.ctm
 
-@REM REMOVE THIS !!! -wd4311 -wd4302 !!! FROM OPTS
-set opts_dev=-D_GAME_INTERNAL
-@REM set opts=-FC -GR- -EHa- -nologo -Zi -Wall -WX -W3 -wd4018 -wd5045 -wd4996 -wd4311 -wd4302  %opts_dev% -D_GAME_WIN32
-
-@REM set optimization_flags=-O2 -Ox -Ob2
-set opts=-FC -GR- -EHa- -nologo -Zi %opts_dev% -D_GAME_WIN32 
+set optimization_flags=-Ox -O2 -Ob2 -wd4711
+set opts_dev=-D_GAME_INTERNAL -Zi
+set opts_warnings=-Wall -WX -W3 -wd4018 -wd5045 -wd4996
+set opts=-FC -GR- -EHa- -nologo %opts_warnings%  -D_GAME_WIN32 %optimization_flags%
 
 set code=%cd%
 set lib_path=%code%\thirdparty\libs
@@ -16,11 +14,6 @@ set include_path=%code%\thirdparty\includes
 if not exist build mkdir build
 
 pushd build
- 
-if not exist SDL2.dll (
-  echo BUILD.BAT: Please, put SDL2.dll in ./BUILD dir. 
-  exit /B -1w
-)
 
 cl %opts% %code%\sdl_game.cpp -Fesdl_game.exe %lib_path%\SDL2\SDL2.lib %lib_path%\SDL2\SDL2main.lib -I%include_path% shell32.lib /link /SUBSYSTEM:WINDOWS
 

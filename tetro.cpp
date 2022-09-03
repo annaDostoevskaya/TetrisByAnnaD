@@ -157,7 +157,7 @@ internal void UpdateTetroContent(well *Well, tetro *Tetro)
     DrawTetro(Well, Tetro->Content, Tetro->Pos);
 }
 
-internal void UpdateTetro(game_state *State, u64 deltaTime)
+internal void UpdateTetro(game_state *State, u32 deltaTime)
 {
     tetro *Tetro = &(State->Tetro);
     well *Well = &(State->Well);
