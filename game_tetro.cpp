@@ -13,6 +13,8 @@ Description: <empty>
 
 internal void InitTetro(tetro *Tetro)
 {
+    srand((unsigned int)time(NULL));
+    
     Tetro->State = TETRO_STATE_SPAWN;
     
     i8Vec2 DefaultTetrominos[TETRO_TOTAL][MAX_TETRO_SIZE] = {
@@ -50,7 +52,6 @@ internal void InitTetro(tetro *Tetro)
 
 internal i64 GetRandomNumber(i64 Max)
 {
-    srand((unsigned int)time(NULL));
     i64 Result = (rand() % Max);
     return Result;
 }

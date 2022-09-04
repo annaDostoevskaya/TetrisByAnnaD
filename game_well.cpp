@@ -121,6 +121,7 @@ internal void UpdateWell(well *Well)
             {
                 for(i16 X = 0; X < Well->Width; X++)
                 {
+                    // TODO(Saiel): Shift delete mb?..
                     Field[Y * Well->Width + X] = Field[(Y - 1) * Well->Width + X];
                 }
             }

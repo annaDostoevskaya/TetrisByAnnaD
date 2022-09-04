@@ -17,7 +17,6 @@ struct game_memory
 {
     u8 PermanentStorage[PERMANENT_STORAGE_SIZE]; // NOTE(annad): We have to fit in 4KB
     u64 PermanentStorageSize;
-    b32 Run;
 };
 
 struct game_time 
@@ -25,7 +24,6 @@ struct game_time
     u64 BeginTime;
     u64 EndTime;
     u32 dt;
-    r32 dtSeconds;
 };
 
 enum Keys 
@@ -85,9 +83,6 @@ struct game
     game_update_and_render *UpdateAndRender;
     game_update_sound_buffer* UpdateSoundBuffer;
 };
-
-extern "C" GAME_UPDATE_AND_RENDER(UpdateAndRender);
-extern "C" GAME_UPDATE_SOUND_BUFFER(UpdateSoundBuffer);
 
 #endif //PLATFROM_GAME_H
 

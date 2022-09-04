@@ -19,6 +19,7 @@ inline r64 Remainder(r64 Dividend, r64 Divisor)
 
 internal r64 Fact(u64 X)
 {
+    // NOTE(annad): We can use tail-call (recursion)
     r64 Result = 1.0f;
     
     while(X > 0)

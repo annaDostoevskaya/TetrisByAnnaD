@@ -1,23 +1,39 @@
+@REM Author: github.com/annadostoevskaya
+@REM File: build.bat
+@REM August 6th 2022 3:38 pm 
+@REM 
+@REM Description: 
+@REM This is a script file for building the "TetrisByAnnaD" project.
+@REM In order to run the program, next to the executable file must be DLL - SDL.DLL, 
+@REM which is located in the ./thirdparty/libs/SDL2.
+@REM Put the library next to the executable after compilation.
+
+
 @echo off
 
 utils\ctime.exe -begin tetris.ctm
 
-set optimization_flags=-Ox -O2 -Ob2 -wd4711
-set opts_dev=-D_GAME_INTERNAL -Zi
-set opts_warnings=-Wall -WX -W3 -wd4018 -wd5045 -wd4996
-set opts=-FC -GR- -EHa- -nologo %opts_warnings%  -D_GAME_WIN32 %optimization_flags%
+set SRC=%cd%
+set LIB_PATH=%SRC%\thirdparty\libs
+set INC_PATH=%SRC%\thirdparty\includes
+set DEV_FLAGS=-D_GAME_INTERNAL -Zi -Wall -WX -W3 -wd4018 -wd5045 -wd4996
 
-set code=%cd%
-set lib_path=%code%\thirdparty\libs
-set include_path=%code%\thirdparty\includes
+set OUTPUT_DIR=build
+set O_FLAGS=-Ox -O2 -Ob2 -wd4711
+set SDL_FLAGS=%LIB_PATH%\SDL2\SDL2.lib %LIB_PATH%\SDL2\SDL2main.lib
+set OPTS=-FC -GR- -EHa- -nologo -D_GAME_WIN32 %DEV_FLAGS%
 
-if not exist build mkdir build
+if NOT exist %OUTPUT_DIR% (
+  mkdir %OUTPUT_DIR%
+)
 
-pushd build
+pushd %OUTPUT_DIR%
 
-cl %opts% %code%\sdl_game.cpp -Fesdl_game.exe %lib_path%\SDL2\SDL2.lib %lib_path%\SDL2\SDL2main.lib -I%include_path% shell32.lib /link /SUBSYSTEM:WINDOWS
+cl %OPTS% %SRC%\sdl_game.cpp -Fesdl_game.exe %SDL_FLAGS% -I%INC_PATH% shell32.lib^
+  /link /SUBSYSTEM:WINDOWS
 
-cl %opts% %code%\game.cpp -Fegame.dll -I%include_path% /LD /link /SUBSYSTEM:WINDOWS -EXPORT:UpdateAndRender -EXPORT:UpdateSoundBuffer
+cl %OPTS% %SRC%\game.cpp -Fegame.dll -I%INC_PATH% -LD^
+  /link /SUBSYSTEM:WINDOWS -EXPORT:UpdateAndRender -EXPORT:UpdateSoundBuffer
 
 popd
 

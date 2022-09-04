@@ -61,5 +61,8 @@ struct game_state
     midi Midi;
 };
 
+extern "C" GAME_UPDATE_AND_RENDER(UpdateAndRender);
+extern "C" GAME_UPDATE_SOUND_BUFFER(UpdateSoundBuffer);
+
 #endif //GAME_H
 

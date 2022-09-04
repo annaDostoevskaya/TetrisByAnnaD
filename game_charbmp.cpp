@@ -19,12 +19,10 @@ internal u64 GetChrBmpHash(size_t BufSize, u8 Char)
 internal u64 GetCharBitmap(char_bmp_buf *CharBmps, u8 Chr)
 {
     u64 BaseIndex = GetChrBmpHash(CharBmps->Size, Chr);
-    
     u64 ChrBmp = 0x0;
     u64 Mask = 0xFF;
     
-    i16 ShiftIndex = 0;
-    for(ShiftIndex = 0; BaseIndex + ShiftIndex < CharBmps->Size; ShiftIndex++)
+    for(i16 ShiftIndex = 0; BaseIndex + ShiftIndex < CharBmps->Size; ShiftIndex++)
     {
         ChrBmp = CharBmps->Buf[BaseIndex + ShiftIndex];
         if(Chr == (u8)(ChrBmp & Mask))
@@ -33,7 +31,7 @@ internal u64 GetCharBitmap(char_bmp_buf *CharBmps, u8 Chr)
         }
     }
     
-    for(ShiftIndex = 0; ShiftIndex < BaseIndex; ShiftIndex++)
+    for(i16 ShiftIndex = 0; ShiftIndex < BaseIndex; ShiftIndex++)
     {
         ChrBmp = CharBmps->Buf[ShiftIndex];
         if(Chr == (u8)(ChrBmp & Mask))
@@ -42,7 +40,7 @@ internal u64 GetCharBitmap(char_bmp_buf *CharBmps, u8 Chr)
         }
     }
     
-    return 0x0;
+    return ChrBmp;
 }
 
 internal void PushCharBitmap(char_bmp_buf *CharBmps, u64 ChrBmp)
@@ -86,6 +84,10 @@ internal void DisplayString(game_screen_buffer *Buffer,
     // DEV: assert(Scale >= 0 && Scale <= 1);
     
     u8 *CharBmp = NULL;
+    
+    u32 Size = (u32)(Scale * (r32)Buffer->Height);
+    u32 LetterSpace = 8 * Size;
+    
     for(u8 i = 0; i < String->Size; i++)
     {
         u8 Symbol = String->Buf[i];
@@ -97,6 +99,7 @@ internal void DisplayString(game_screen_buffer *Buffer,
         
         u64 ProxyChrBmp = GetCharBitmap(CharBmps, Symbol);
         CharBmp = (u8*)(&ProxyChrBmp);
+        u32 LetterShift = i * LetterSpace;
         
         for(i8 j = 7; j > 0; j--)
         {
@@ -104,9 +107,6 @@ internal void DisplayString(game_screen_buffer *Buffer,
             {
                 if(CharBmp[j] & (1 << k))
                 {
-                    u32 Size = (u32)(Scale * (r32)Buffer->Height);
-                    u32 LetterSpace = 8 * Size;
-                    u32 LetterShift = i * LetterSpace;
                     u32 BitShiftX = (u32)((r32)Buffer->Width * X) - (k * Size);
                     u32 BitShiftY = (u32)((r32)Buffer->Height * Y) - (j * Size);
                     u32 GlobalX = BitShiftX + LetterShift;

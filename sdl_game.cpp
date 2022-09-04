@@ -11,7 +11,11 @@ Description: <empty>
 #include <windows.h>
 #endif // _GAME_WIN32
 #ifdef _GAME_LINUX
-void OutputDebugString(const char *DebugString) {}
+#include <stdio.h>
+void OutputDebugString(const char *DebugString) 
+{
+    fprintf(stderr, DebugString);
+}
 #endif // _GAME_LINUX
 #endif // _GAME_INTERNAL
 
@@ -31,8 +35,6 @@ void OutputDebugString(const char *) {}
 
 #define FREQ 44100
 #define SAMPLES 2048
-
-#include <stdio.h>
 
 void MixAudio(void *Udata, Uint8 *Stream, int StreamLen)
 {
@@ -171,7 +173,7 @@ int main(int Argc, char **Argv)
             switch(Event.type)
             {
                 // NOTE(annad): Alt+F4 work too.
-                case SDL_QUIT: 
+                case SDL_QUIT:
                 {
                     Run = false;
                     break;
@@ -235,6 +237,14 @@ int main(int Argc, char **Argv)
             }
         }
         
+        // TODO(annad): IDK, How we can solve it?.. 
+        // https://stackoverflow.com/questions/69259604/sdl2-sdl-function-sdl-delay-freezes-program-on-quitting-the-program-with-sdl
+        // It's wrong?..
+        if(Run == false)
+        {
+            break;
+        }
+        
         // NOTE(annad): Main.
         Game.UpdateAndRender(&GameScreenBuffer, &GameInput, &GameMemory, &GameTime);
         
@@ -251,7 +261,6 @@ int main(int Argc, char **Argv)
             GameTime.dt = (u32)(GameTime.EndTime - GameTime.BeginTime);
         }
         
-        GameTime.dtSeconds = (r32)GameTime.dt / 1000.0f;
         GameTime.BeginTime = GameTime.EndTime;
     }
     
