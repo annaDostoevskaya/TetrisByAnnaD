@@ -163,9 +163,9 @@ extern "C" GAME_UPDATE_AND_RENDER(UpdateAndRender)
         State->Fail = false;
     }
     
-    UpdateTetro(State, Time->dt);
     UpdateWell(Well);
     RenderWell(Buffer, Well);
+    UpdateTetro(State, Time->dt);
     
     {
         // NOTE(annad): Update Input.

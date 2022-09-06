@@ -7,6 +7,7 @@ Description: <empty>
 */
 
 #include "game_well.h"
+#include <SDL2/SDL_events.h>
 
 #define BORDER_COLOR 0.93f
 #define INTERNAL_FIELD_COLOR 0.0f
@@ -102,29 +103,68 @@ inline b32 WellBlockIsFilled(well *Well, i16Vec2 Pos)
     return WellBlockIs(Well, BLOCK_STATE_FILLED, Pos);
 }
 
+internal b32 WellIsRowFilled(well *Well, i16 RowIdx)
+{
+    block_state *Row = &Well->Field[RowIdx * Well->Width];
+    for (i16 i = 0; i < Well->Width; i++)
+    {
+        if (Row[i] != BLOCK_STATE_FILLED)
+            return false;
+    }
+
+    return true;
+}
+
+internal void WellCopyRow(well *Well, i16 Src, i16 Dst)
+{
+    if (Src == Dst) return;
+    block_state *SrcRow = &Well->Field[Src * Well->Width];
+    block_state *DstRow = &Well->Field[Dst * Well->Width];
+    
+    for (i16 i = 0; i < Well->Width; i++)
+    {
+        DstRow[i] = SrcRow[i];
+    }
+}
+
 internal void UpdateWell(well *Well)
 {
-    i16Vec2 BurnCursor = {0, 0};
-    block_state *Field = (block_state*)(&Well->Field);
-    
-    for(BurnCursor.Y = 0; BurnCursor.Y < Well->Height; BurnCursor.Y++)
+    i16 InsertIdx = Well->Height - 1;
+    for (i16 RowIdx = Well->Height - 1; RowIdx >= 0; RowIdx--)
     {
-        for(BurnCursor.X = 0; BurnCursor.X < Well->Width; BurnCursor.X++)
+        if (!WellIsRowFilled(Well, RowIdx)) 
         {
-            if(Field[BurnCursor.Y * Well->Width + BurnCursor.X] != BLOCK_STATE_FILLED)
-                break;
-        }
-        
-        if(BurnCursor.X == Well->Width)
-        {
-            for(i16 Y = BurnCursor.Y; Y > 0; Y--)
-            {
-                for(i16 X = 0; X < Well->Width; X++)
-                {
-                    // TODO(Saiel): Shift delete mb?..
-                    Field[Y * Well->Width + X] = Field[(Y - 1) * Well->Width + X];
-                }
-            }
+            WellCopyRow(Well, RowIdx, InsertIdx--);
         }
     }
+	
+	for (;InsertIdx >= 0; InsertIdx--)
+	{
+		for (i16 i = 0; i < Well->Width; i++)
+			Well->Field[InsertIdx * Well->Width + i] = BLOCK_STATE_EMPTY;
+	}
+
+    /* i16Vec2 BurnCursor = {0, 0}; */
+    /* block_state *Field = (block_state*)(&Well->Field); */
+    
+    /* for(BurnCursor.Y = 0; BurnCursor.Y < Well->Height; BurnCursor.Y++) */
+    /* { */
+    /*     for(BurnCursor.X = 0; BurnCursor.X < Well->Width; BurnCursor.X++) */
+    /*     { */
+    /*         if(Field[BurnCursor.Y * Well->Width + BurnCursor.X] != BLOCK_STATE_FILLED) */
+    /*             break; */
+    /*     } */
+        
+    /*     if(BurnCursor.X == Well->Width) */
+    /*     { */
+    /*         for(i16 Y = BurnCursor.Y; Y > 0; Y--) */
+    /*         { */
+    /*             for(i16 X = 0; X < Well->Width; X++) */
+    /*             { */
+    /*                 // TODO(Saiel): Shift delete mb?.. */
+    /*                 Field[Y * Well->Width + X] = Field[(Y - 1) * Well->Width + X]; */
+    /*             } */
+    /*         } */
+    /*     } */
+    /* } */
 }

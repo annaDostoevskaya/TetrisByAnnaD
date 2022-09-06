@@ -96,7 +96,7 @@ int main(int Argc, char **Argv)
     
     // NOTE(annad): Load game code.
     game Game = {};
-    void *GameDLLHandle = SDL_LoadObject("./game.dll");
+    void *GameDLLHandle = SDL_LoadObject("./libgame.so");
     if(!GameDLLHandle)
     {
         OutputDebugString("Can't load DLL file!");
