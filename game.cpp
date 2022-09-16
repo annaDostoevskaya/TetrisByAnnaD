@@ -114,6 +114,9 @@ extern "C" GAME_UPDATE_AND_RENDER(UpdateAndRender)
         State->MetaPixelSize = Buffer->Height / 70;
         State->Fail = false;
         
+        State->UpdateTime = 500;
+        State->AccumTime = 0;
+        
         InitWell(Buffer, Well, State->MetaPixelSize);
         InitTetro(Tetro);
         
@@ -159,12 +162,23 @@ extern "C" GAME_UPDATE_AND_RENDER(UpdateAndRender)
             State->Record = State->Score;
         }
         
+        State->AccumTime = 0;
         State->Score = 0;
         State->Fail = false;
     }
     
-    UpdateTetro(State, Time->dt);
-    UpdateWell(Well);
+    if(State->AccumTime > State->UpdateTime)
+    {
+        UpdateTetro(State);
+        UpdateWell(Well);
+        
+        State->AccumTime = 0;
+    }
+    else
+    {
+        State->AccumTime += Time->dt;
+    }
+    
     RenderWell(Buffer, Well);
     
     {

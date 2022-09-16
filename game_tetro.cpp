@@ -37,9 +37,6 @@ internal void InitTetro(tetro *Tetro)
     Tetro->Pos = (&Tetro->PosBuffers[0]);
     Tetro->ShadowPos = (&Tetro->PosBuffers[1]);
     
-    Tetro->DownTime = 500;
-    Tetro->AccumTime = Tetro->DownTime;
-    
     tetro_type TypesBag[TETRO_TOTAL] = {
         TETRO_O, TETRO_T, TETRO_L,
         TETRO_J, TETRO_Z, TETRO_S, TETRO_I,
@@ -158,20 +155,11 @@ internal void UpdateTetroContent(well *Well, tetro *Tetro)
     DrawTetro(Well, Tetro->Content, Tetro->Pos);
 }
 
-internal void UpdateTetro(game_state *State, u32 deltaTime)
+internal void UpdateTetro(game_state *State)
 {
     tetro *Tetro = &(State->Tetro);
     well *Well = &(State->Well);
     midi *Midi = &(State->Midi);
-    
-    // NOTE(saiel): Move this to top.
-    if(Tetro->AccumTime < Tetro->DownTime)
-    {
-        Tetro->AccumTime += deltaTime;
-        return;
-    }
-    
-    Tetro->AccumTime = 0;
     
     switch(Tetro->State)
     {

@@ -52,6 +52,9 @@ struct game_state
     u64 Score;
     u64 Record;
     
+    u32 UpdateTime;
+    u32 AccumTime;
+    
     well Well;
     tetro Tetro;
     

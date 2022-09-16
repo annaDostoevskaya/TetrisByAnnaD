@@ -51,9 +51,6 @@ struct tetro
     i8Vec2 *Content;
     i8Vec2 *ShadowContent;
     i8Vec2 ContentBuffers[2][MAX_TETRO_SIZE];
-    
-    u32 DownTime;
-    u32 AccumTime;
 };
 
 #endif //TETRO_H
