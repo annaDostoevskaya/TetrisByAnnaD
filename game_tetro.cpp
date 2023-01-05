@@ -49,6 +49,7 @@ internal void InitTetro(tetro *Tetro)
 
 internal i64 GetRandomNumber(i64 Max)
 {
+    // NOTE(annad): We can implement Linear Congruential Generator (LCG)
     i64 Result = (rand() % Max);
     return Result;
 }
