@@ -11,7 +11,7 @@ Description: <empty>
 
 #include "platform_game.h"
 
-#include "mmath.h"
+#include "base_math.h"
 #include "base_types.h"
 #include "sdl_game.h"
 #include "game_well.h"

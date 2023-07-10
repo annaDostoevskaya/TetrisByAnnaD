@@ -15,6 +15,7 @@ Description: <empty>
 
 // NOTE(annad): Developer defined symbols, you can create youself, if, are you can.
 // Remeber about little-endian and that last byte is CHAR 0x43 - 'C'
+// TODO(Leonid): Are we can fetch pixel (raster char) data with assembler? VGA?? BIOS???
 #define CHAR_BITMAP_C 0xf08080808080f043
 #define CHAR_BITMAP_D 0xe09090909090e044
 #define CHAR_BITMAP_E 0xf08080e08080f045

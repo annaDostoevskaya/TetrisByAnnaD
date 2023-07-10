@@ -58,8 +58,8 @@ internal void DrawRectangle(game_screen_buffer *Buffer,
 //
 
 // NOTE(annad): Maybe we must remove this and use stdlib of C?.. idk...
-#include "mmath.cpp"
-#include "algs.cpp"
+#include "base_math.cpp"
+#include "base_algs.cpp"
 
 #include "game_well.cpp"
 #include "game_tetro.cpp"

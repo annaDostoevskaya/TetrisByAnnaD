@@ -19,6 +19,9 @@ void OutputDebugString(const char *DebugString)
 #endif // _GAME_LINUX
 #endif // _GAME_INTERNAL
 
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_audio.h>
+
 #ifndef _GAME_INTERNAL
 void OutputDebugString(const char *) {}
 #endif
@@ -26,9 +29,6 @@ void OutputDebugString(const char *) {}
 #include "base_types.h"
 #include "platform_game.h"
 #include "sdl_game.h"
-
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_audio.h>
 
 #define SCREEN_WIDTH 1920/2
 #define SCREEN_HEIGHT 1080/2
@@ -50,6 +50,8 @@ void MixAudio(void *Udata, Uint8 *Stream, int StreamLen)
     
     GameUpdateSoundBuffer(GameMemory, &GameSoundBuffer);
 }
+
+#include "game.cpp"
 
 int main(int Argc, char **Argv)
 {
@@ -94,29 +96,6 @@ int main(int Argc, char **Argv)
     // NOTE(annad): Event for quit.
     SDL_Event Event = {};
     
-    // NOTE(annad): Load game code.
-    game Game = {};
-    void *GameDLLHandle = SDL_LoadObject("./game.dll");
-    if(!GameDLLHandle)
-    {
-        OutputDebugString("Can't load DLL file!");
-        return -1;
-    }
-    
-    Game.UpdateAndRender = (game_update_and_render*)SDL_LoadFunction(GameDLLHandle, "UpdateAndRender");
-    if(!Game.UpdateAndRender)
-    {
-        OutputDebugString("Can't load \"UpdateAndRender\" from DLL file!");
-        return -1;
-    }
-    
-    Game.UpdateSoundBuffer = (game_update_sound_buffer*)SDL_LoadFunction(GameDLLHandle, "UpdateSoundBuffer");
-    if(!Game.UpdateSoundBuffer)
-    {
-        OutputDebugString("Can't load \"UpdateSoundBuffer\" DLL file!");
-        return -1;
-    }
-    
     // NOTE(annad): Game Memory Section.
     game_memory GameMemory = {};
     GameMemory.PermanentStorageSize = PERMANENT_STORAGE_SIZE;
@@ -133,7 +112,7 @@ int main(int Argc, char **Argv)
     AudioFormat.samples = SAMPLES;
     
     sdl_mix_audio_user_data SDLMixAudioUserData = {};
-    SDLMixAudioUserData.GameUpdateSoundBuffer = Game.UpdateSoundBuffer;
+    SDLMixAudioUserData.GameUpdateSoundBuffer = UpdateSoundBuffer;
     SDLMixAudioUserData.GameMemory = &GameMemory;
     
     AudioFormat.callback = MixAudio;
@@ -246,7 +225,7 @@ int main(int Argc, char **Argv)
         }
         
         // NOTE(annad): Main.
-        Game.UpdateAndRender(&GameScreenBuffer, &GameInput, &GameMemory, &GameTime);
+        UpdateAndRender(&GameScreenBuffer, &GameInput, &GameMemory, &GameTime);
         
         SDL_UpdateWindowSurface(Window);
         
@@ -264,7 +243,6 @@ int main(int Argc, char **Argv)
         GameTime.BeginTime = GameTime.EndTime;
     }
     
-    SDL_UnloadObject(GameDLLHandle);
     SDL_CloseAudio();
     SDL_FreeSurface(ScreenBuffer);
     SDL_DestroyWindow(Window);

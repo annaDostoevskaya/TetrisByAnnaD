@@ -78,11 +78,5 @@ game_sound_buffer *SoundBuffer)
 
 typedef GAME_UPDATE_SOUND_BUFFER(game_update_sound_buffer);
 
-struct game
-{
-    game_update_and_render *UpdateAndRender;
-    game_update_sound_buffer* UpdateSoundBuffer;
-};
-
 #endif //PLATFROM_GAME_H
 

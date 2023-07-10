@@ -1,12 +1,12 @@
 /* 
 Author: github.com/annadostoevskaya
-File: math.cpp
+File: base_math.cpp
 Date: August 30th 2022 10:51 pm 
 
 Description: <empty>
 */
 
-#include "mmath.h"
+#include "base_math.h"
 
 #define MMATH_PI 3.14159265359
 

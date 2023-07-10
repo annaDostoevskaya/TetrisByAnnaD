@@ -1,13 +1,13 @@
 /* 
 Author: github.com/annadostoevskaya
-File: mmath.h
+File: base_math.h
 Date: August 19th 2022 10:57 pm 
 
 Description: <empty>
 */
 
-#ifndef MATH_H
-#define MATH_H
+#ifndef BASE_MATH_H
+#define BASE_MATH_H
 
 #include "base_types.h"
 
@@ -47,5 +47,5 @@ struct u32Vec2
     u32 Y;
 };
 
-#endif //MATH_H
+#endif // BASE_MATH_H
 

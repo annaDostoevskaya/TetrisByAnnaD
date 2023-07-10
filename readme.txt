@@ -21,8 +21,8 @@ to be rewritten for the other platforms. All files
 starting with "game_*" contain platform-independent 
 code that must not be modified during porting.
 
-The "algs.cpp" file and "mmath.cpp" contain extremely 
-specific code, and if the "mmath.cpp" is just slow and 
+The "base_algs.cpp" file and "base_math.cpp" contain extremely 
+specific code, and if the "base_math.cpp" is just slow and 
 there is a better alternative (the standard library, 
 "std::sin" function is faster then "Sin", I checked), 
 then the "algs.cpp" file contains code that depends 
